@@ -37,4 +37,9 @@ public class AdminStatsController {
     public ApiResponse<Map<String, Object>> getVaccineDueStats(@RequestParam(defaultValue = "30") int days) {
         return ApiResponse.success(statsService.getVaccineDueStats(days));
     }
+
+    @GetMapping("/operational")
+    public ApiResponse<Map<String, Object>> getOperationalStats() {
+        return ApiResponse.success(statsService.getOperationalStats());
+    }
 }

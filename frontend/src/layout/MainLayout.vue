@@ -30,7 +30,11 @@
           </el-menu-item>
           <el-menu-item index="/staff/orders">
             <el-icon><Ticket /></el-icon>
-            <span>订单处理</span>
+            <span>寄养管理</span>
+          </el-menu-item>
+          <el-menu-item index="/staff/operational-stats">
+            <el-icon><DataLine /></el-icon>
+            <span>综合统计</span>
           </el-menu-item>
         </template>
 
@@ -87,7 +91,7 @@ import { useUserStore } from '../store/user'
 import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import request from '../utils/request'
-import { HomeFilled, List, ShoppingCart, Management, Ticket, User, PieChart } from '@element-plus/icons-vue'
+import { HomeFilled, List, ShoppingCart, Management, Ticket, User, PieChart, DataLine } from '@element-plus/icons-vue'
 
 const userStore = useUserStore()
 const router = useRouter()

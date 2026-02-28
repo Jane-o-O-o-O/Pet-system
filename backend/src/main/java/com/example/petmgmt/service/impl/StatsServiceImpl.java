@@ -133,4 +133,59 @@ public class StatsServiceImpl implements StatsService {
                                 .multiply(BigDecimal.valueOf(100))
                                 .divide(BigDecimal.valueOf(total), 2, RoundingMode.HALF_UP);
         }
-}
+
+    @Override
+    public Map<String, Object> getOperationalStats() {
+        Map<String, Object> stats = new HashMap<>();
+
+        // 疫苗库存统计（按疫苗名称分组计数）
+        List<VaccineRecord> allVaccines = vaccineRecordMapper.selectList(null);
+        Map<String, Long> vaccineInventory = allVaccines.stream()
+                .filter(v -> v.getVaccineName() != null)
+                .collect(Collectors.groupingBy(VaccineRecord::getVaccineName, Collectors.counting()));
+        stats.put("vaccineInventory", vaccineInventory);
+        stats.put("totalVaccineRecords", allVaccines.size());
+
+        // 当前寄养中的订单（CONFIRMED 和 BOARDING 状态）
+        List<BoardingOrder> activeBoardings = boardingOrderMapper.selectList(
+                new LambdaQueryWrapper<BoardingOrder>()
+                        .in(BoardingOrder::getStatus, OrderStatus.CONFIRMED, OrderStatus.BOARDING)
+        );
+
+        // 按房型统计当前使用数量
+        Map<String, Long> roomUsage = activeBoardings.stream()
+                .filter(o -> o.getRoomType() != null)
+                .collect(Collectors.groupingBy(BoardingOrder::getRoomType, Collectors.counting()));
+
+        // 房型容量配置（可以从 sys_config 读取，这里先硬编码）
+        Map<String, Integer> roomCapacity = new HashMap<>();
+        roomCapacity.put("Standard", 20);
+        roomCapacity.put("Deluxe", 10);
+        roomCapacity.put("Suite", 5);
+
+        // 计算剩余空位
+        Map<String, Map<String, Object>> roomStats = new HashMap<>();
+        for (Map.Entry<String, Integer> entry : roomCapacity.entrySet()) {
+            String roomType = entry.getKey();
+            int capacity = entry.getValue();
+            long used = roomUsage.getOrDefault(roomType, 0L);
+            long available = Math.max(0, capacity - used);
+
+            Map<String, Object> roomInfo = new HashMap<>();
+            roomInfo.put("capacity", capacity);
+            roomInfo.put("used", used);
+            roomInfo.put("available", available);
+            roomInfo.put("usageRate", calculateRate(used, capacity));
+            roomStats.put(roomType, roomInfo);
+        }
+
+        stats.put("roomStats", roomStats);
+        stats.put("totalActiveBoardings", activeBoardings.size());
+
+        // 当前订单状态分布
+        List<BoardingOrder> allOrders = boardingOrderMapper.selectList(null);
+        Map<String, Long> statusDistribution = buildStatusCounts(allOrders);
+        stats.put("statusDistribution", statusDistribution);
+
+        return stats;
+    }
