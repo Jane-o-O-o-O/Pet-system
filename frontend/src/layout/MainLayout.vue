@@ -13,6 +13,10 @@
         </el-menu-item>
 
         <template v-if="userStore.role === 'OWNER'">
+          <el-menu-item index="/owner/quick-actions">
+            <el-icon><CirclePlus /></el-icon>
+            <span>快捷操作</span>
+          </el-menu-item>
           <el-menu-item index="/owner/pets">
             <el-icon><List /></el-icon>
             <span>我的宠物</span>
@@ -91,7 +95,7 @@ import { useUserStore } from '../store/user'
 import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import request from '../utils/request'
-import { HomeFilled, List, ShoppingCart, Management, Ticket, User, PieChart, DataLine } from '@element-plus/icons-vue'
+import { HomeFilled, List, ShoppingCart, Management, Ticket, User, PieChart, DataLine, CirclePlus } from '@element-plus/icons-vue'
 
 const userStore = useUserStore()
 const router = useRouter()

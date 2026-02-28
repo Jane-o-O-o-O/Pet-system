@@ -36,29 +36,6 @@
           </el-card>
         </el-col>
       </el-row>
-      <div class="section-title">快捷操作</div>
-      <el-card class="quick-actions-card">
-        <el-row :gutter="16">
-          <el-col :span="12">
-            <div class="action-button" @click="navigateToPets">
-              <el-icon class="action-icon pet"><Plus /></el-icon>
-              <div class="action-content">
-                <div class="action-title">新增宠物</div>
-                <div class="action-desc">添加新的宠物档案</div>
-              </div>
-            </div>
-          </el-col>
-          <el-col :span="12">
-            <div class="action-button" @click="navigateToOrders">
-              <el-icon class="action-icon order"><Calendar /></el-icon>
-              <div class="action-content">
-                <div class="action-title">申请寄养</div>
-                <div class="action-desc">为宠物预订寄养服务</div>
-              </div>
-            </div>
-          </el-col>
-        </el-row>
-      </el-card>
       <div class="section-title">待办与提醒</div>
       <el-card class="message-list-card">
         <ul class="virtual-messages">
@@ -173,12 +150,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useUserStore } from '../store/user'
-import { useRouter } from 'vue-router'
 import request from '../utils/request'
-import { Bell, List, DataLine, Plus, Calendar } from '@element-plus/icons-vue'
+import { Bell, List, DataLine } from '@element-plus/icons-vue'
 
 const userStore = useUserStore()
-const router = useRouter()
 const currentTime = ref(new Date().toLocaleString())
 const notifications = ref<any[]>([])
 const loading = ref(false)
@@ -275,14 +250,6 @@ const markAsRead = async (id: number) => {
   }
 }
 
-const navigateToPets = () => {
-  router.push('/owner/pets')
-}
-
-const navigateToOrders = () => {
-  router.push('/owner/orders')
-}
-
 const fetchOverview = async () => {
   try {
     const res: any = await request.get('/dashboard/overview')
@@ -376,46 +343,6 @@ onUnmounted(() => {
 }
 .message-list-card {
   margin-bottom: 20px;
-}
-.quick-actions-card {
-  margin-bottom: 20px;
-}
-.action-button {
-  display: flex;
-  align-items: center;
-  padding: 20px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-.action-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-.action-button .action-icon {
-  font-size: 36px;
-  margin-right: 16px;
-  opacity: 0.9;
-}
-.action-button .action-icon.pet {
-  color: #ffd700;
-}
-.action-button .action-icon.order {
-  color: #90ee90;
-}
-.action-button .action-content {
-  flex: 1;
-}
-.action-button .action-title {
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 4px;
-}
-.action-button .action-desc {
-  font-size: 13px;
-  opacity: 0.85;
 }
 .virtual-messages {
   list-style: none;
