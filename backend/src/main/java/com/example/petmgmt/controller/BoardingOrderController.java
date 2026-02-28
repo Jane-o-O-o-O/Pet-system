@@ -6,6 +6,7 @@ import com.example.petmgmt.common.ErrorCode;
 import com.example.petmgmt.common.PageResult;
 import com.example.petmgmt.domain.entity.BoardingOrder;
 import com.example.petmgmt.domain.enums.OrderStatus;
+import com.example.petmgmt.domain.vo.BoardingOrderVO;
 import com.example.petmgmt.service.BoardingOrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +27,7 @@ public class BoardingOrderController {
     }
 
     @GetMapping
-    public ApiResponse<PageResult<BoardingOrder>> getOrders(
+    public ApiResponse<PageResult<BoardingOrderVO>> getOrders(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) OrderStatus status) {

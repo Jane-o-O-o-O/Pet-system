@@ -6,9 +6,7 @@
 
     <el-table :data="orders" v-loading="loading" style="width: 100%">
       <el-table-column prop="orderNo" label="订单号" width="220" />
-      <el-table-column label="宠物" width="120">
-        <template #default="scope">{{ getPetName(scope.row.petId) }}</template>
-      </el-table-column>
+      <el-table-column prop="petName" label="宠物" width="120" />
       <el-table-column prop="startDate" label="开始日期" width="120" />
       <el-table-column prop="endDate" label="结束日期" width="120" />
       <el-table-column prop="roomType" label="房型" width="100">

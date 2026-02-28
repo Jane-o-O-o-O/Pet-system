@@ -93,8 +93,8 @@
             max-height="360"
           >
             <el-table-column prop="orderNo" label="订单号" min-width="220" />
-            <el-table-column prop="petId" label="宠物ID" width="90" />
-            <el-table-column prop="ownerId" label="主人ID" width="90" />
+            <el-table-column prop="petName" label="宠物名称" width="120" />
+            <el-table-column prop="ownerName" label="主人姓名" width="120" />
             <el-table-column prop="startDate" label="开始日期" width="120" />
             <el-table-column prop="endDate" label="结束日期" width="120" />
             <el-table-column label="房型" width="110">
@@ -236,14 +236,14 @@ const exportStatsReport = () => {
 
   rows.push([])
   rows.push(['订单明细'])
-  rows.push(['订单号', '宠物ID', '主人ID', '开始日期', '结束日期', '房型', '总价', '状态'])
+  rows.push(['订单号', '宠物名称', '主人姓名', '开始日期', '结束日期', '房型', '总价', '状态'])
 
   const detailOrders = boardingStats.value.orders || []
   detailOrders.forEach((order: any) => {
     rows.push([
       order.orderNo ?? '',
-      order.petId ?? '',
-      order.ownerId ?? '',
+      order.petName ?? '',
+      order.ownerName ?? '',
       order.startDate ?? '',
       order.endDate ?? '',
       roomTypeLabel(order.roomType),

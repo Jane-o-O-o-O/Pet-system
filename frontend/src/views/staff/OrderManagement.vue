@@ -12,8 +12,8 @@
 
     <el-table :data="orders" v-loading="loading" style="width: 100%">
       <el-table-column prop="orderNo" label="订单号" width="220" />
-      <el-table-column prop="petId" label="宠物ID" width="80" />
-      <el-table-column prop="ownerId" label="主人ID" width="80" />
+      <el-table-column prop="petName" label="宠物名称" width="120" />
+      <el-table-column prop="ownerName" label="主人姓名" width="120" />
       <el-table-column prop="startDate" label="开始日期" width="120" />
       <el-table-column prop="endDate" label="结束日期" width="120" />
       <el-table-column label="房型" width="100">

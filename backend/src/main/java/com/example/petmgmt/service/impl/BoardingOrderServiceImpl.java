@@ -11,6 +11,8 @@ import com.example.petmgmt.domain.entity.Pet;
 import com.example.petmgmt.domain.entity.User;
 import com.example.petmgmt.domain.enums.OrderStatus;
 import com.example.petmgmt.domain.enums.Role;
+import com.example.petmgmt.domain.vo.BoardingOrderVO;
+import org.springframework.beans.BeanUtils;
 import com.example.petmgmt.mapper.BoardingOrderMapper;
 import com.example.petmgmt.mapper.PetMapper;
 import com.example.petmgmt.mapper.UserMapper;
@@ -62,7 +64,7 @@ public class BoardingOrderServiceImpl implements BoardingOrderService {
     }
 
     @Override
-    public PageResult<BoardingOrder> getOrders(int page, int size, OrderStatus status) {
+    public PageResult<BoardingOrderVO> getOrders(int page, int size, OrderStatus status) {
         User user = getCurrentUser();
         LambdaQueryWrapper<BoardingOrder> query = new LambdaQueryWrapper<>();
         if (user.getRole() == Role.OWNER) {
@@ -74,7 +76,29 @@ public class BoardingOrderServiceImpl implements BoardingOrderService {
         query.orderByDesc(BoardingOrder::getCreatedAt);
 
         Page<BoardingOrder> orderPage = boardingOrderMapper.selectPage(new Page<>(page, size), query);
-        return new PageResult<>(orderPage.getRecords(), orderPage.getTotal(), orderPage.getCurrent(), orderPage.getSize());
+        
+        java.util.List<BoardingOrderVO> voList = orderPage.getRecords().stream()
+            .map(this::convertToVO)
+            .collect(java.util.stream.Collectors.toList());
+        
+        return new PageResult<>(voList, orderPage.getTotal(), orderPage.getCurrent(), orderPage.getSize());
+    }
+    
+    private BoardingOrderVO convertToVO(BoardingOrder order) {
+        BoardingOrderVO vo = new BoardingOrderVO();
+        BeanUtils.copyProperties(order, vo);
+        
+        Pet pet = petMapper.selectById(order.getPetId());
+        if (pet != null) {
+            vo.setPetName(pet.getName());
+        }
+        
+        User owner = userMapper.selectById(order.getOwnerId());
+        if (owner != null) {
+            vo.setOwnerName(owner.getUsername());
+        }
+        
+        return vo;
     }
 
     @Override

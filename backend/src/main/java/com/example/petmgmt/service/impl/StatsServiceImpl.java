@@ -2,8 +2,11 @@ package com.example.petmgmt.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.petmgmt.domain.entity.BoardingOrder;
+import com.example.petmgmt.domain.entity.Pet;
+import com.example.petmgmt.domain.entity.User;
 import com.example.petmgmt.domain.entity.VaccineRecord;
 import com.example.petmgmt.domain.enums.OrderStatus;
+import com.example.petmgmt.domain.vo.BoardingOrderVO;
 import com.example.petmgmt.mapper.BoardingOrderMapper;
 import com.example.petmgmt.mapper.MedicalRecordMapper;
 import com.example.petmgmt.mapper.PetMapper;
@@ -11,6 +14,7 @@ import com.example.petmgmt.mapper.UserMapper;
 import com.example.petmgmt.mapper.VaccineRecordMapper;
 import com.example.petmgmt.service.StatsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -91,8 +95,29 @@ public class StatsServiceImpl implements StatsService {
                 stats.put("cancelledCount", cancelledCount);
                 stats.put("completionRate", calculateRate(completedCount, orders.size()));
                 stats.put("cancellationRate", calculateRate(cancelledCount, orders.size()));
-                stats.put("orders", orders);
+                
+                List<BoardingOrderVO> orderVOs = orders.stream()
+                        .map(this::convertToVO)
+                        .collect(Collectors.toList());
+                stats.put("orders", orderVOs);
         return stats;
+    }
+    
+    private BoardingOrderVO convertToVO(BoardingOrder order) {
+        BoardingOrderVO vo = new BoardingOrderVO();
+        BeanUtils.copyProperties(order, vo);
+        
+        Pet pet = petMapper.selectById(order.getPetId());
+        if (pet != null) {
+            vo.setPetName(pet.getName());
+        }
+        
+        User owner = userMapper.selectById(order.getOwnerId());
+        if (owner != null) {
+            vo.setOwnerName(owner.getUsername());
+        }
+        
+        return vo;
     }
 
     @Override
@@ -189,3 +214,4 @@ public class StatsServiceImpl implements StatsService {
 
         return stats;
     }
+}
