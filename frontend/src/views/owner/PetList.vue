@@ -103,9 +103,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, reactive, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import request from '../../utils/request'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+
+const route = useRoute()
 
 const pets = ref<any[]>([])
 const loading = ref(false)
@@ -225,7 +228,18 @@ const handleViewRecords = async (pet: any) => {
   }
 }
 
-onMounted(fetchPets)
+onMounted(() => {
+  fetchPets()
+  if (route.query.action === 'add') {
+    handleAdd()
+  }
+})
+
+watch(() => route.query.action, (action) => {
+  if (action === 'add') {
+    handleAdd()
+  }
+})
 </script>
 
 <style scoped>

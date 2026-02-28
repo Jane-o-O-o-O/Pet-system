@@ -80,9 +80,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, onMounted, reactive, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import request from '../../utils/request'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+
+const route = useRoute()
 
 const orders = ref<any[]>([])
 const myPets = ref<any[]>([])
@@ -196,6 +199,15 @@ const handleCancel = (id: number) => {
 onMounted(() => {
   fetchOrders()
   fetchPets()
+  if (route.query.action === 'add') {
+    handleAdd()
+  }
+})
+
+watch(() => route.query.action, (action) => {
+  if (action === 'add') {
+    handleAdd()
+  }
 })
 </script>
 

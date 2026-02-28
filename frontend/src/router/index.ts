@@ -24,12 +24,6 @@ const routes: RouteRecordRaw[] = [
         meta: { roles: ['OWNER'] }
       },
       {
-        path: 'owner/quick-actions',
-        name: 'QuickActions',
-        component: () => import('../views/owner/QuickActions.vue'),
-        meta: { roles: ['OWNER'] }
-      },
-      {
         path: 'owner/orders',
         name: 'MyOrders',
         component: () => import('../views/owner/OrderList.vue'),
