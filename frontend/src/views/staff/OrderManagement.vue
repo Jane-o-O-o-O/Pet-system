@@ -65,7 +65,7 @@ const pageSize = ref(10)
 const total = ref(0)
 
 const statusLabel = (s: string) => ({ CREATED: '待确认', CONFIRMED: '已确认', BOARDING: '寄养中', COMPLETED: '已完成', CANCELLED: '已取消' }[s] || s)
-const getStatusType = (s: string) => ({ CREATED: 'info', CONFIRMED: '', BOARDING: 'warning', COMPLETED: 'success', CANCELLED: 'danger' }[s] || '')
+const getStatusType = (s: string) => ({ CREATED: 'info', CONFIRMED: 'primary', BOARDING: 'warning', COMPLETED: 'success', CANCELLED: 'danger' }[s])
 const roomTypeLabel = (t: string) => ({ Standard: '标准间', Deluxe: '豪华间', Suite: '套房' }[t] || t)
 
 const fetchOrders = async () => {

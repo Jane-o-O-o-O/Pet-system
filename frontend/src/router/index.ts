@@ -30,6 +30,12 @@ const routes: RouteRecordRaw[] = [
         meta: { roles: ['OWNER'] }
       },
       {
+        path: 'owner/appointments',
+        name: 'MyAppointments',
+        component: () => import('../views/owner/Appointment.vue'),
+        meta: { roles: ['OWNER'] }
+      },
+      {
         path: 'staff/pets',
         name: 'StaffPets',
         component: () => import('../views/staff/PetManagement.vue'),
@@ -73,18 +79,17 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, _from, next) => {
+router.beforeEach((to, _from) => {
   const userStore = useUserStore()
   if (to.path === '/login') {
-    next()
+    return
   } else if (!userStore.token) {
-    next('/login')
+    return '/login'
   } else {
     if (to.meta.roles && !(to.meta.roles as string[]).includes(userStore.role)) {
-      next('/dashboard')
-    } else {
-      next()
+      return '/dashboard'
     }
+    return
   }
 })
 

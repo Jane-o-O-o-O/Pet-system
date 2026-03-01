@@ -39,6 +39,7 @@ public class AdminStatsController {
     }
 
     @GetMapping("/operational")
+    @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
     public ApiResponse<Map<String, Object>> getOperationalStats() {
         return ApiResponse.success(statsService.getOperationalStats());
     }
