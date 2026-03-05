@@ -1,16 +1,15 @@
 package com.example.petmgmt.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.petmgmt.common.SecurityUtils;
 import com.example.petmgmt.domain.entity.BoardingOrder;
 import com.example.petmgmt.domain.entity.Pet;
 import com.example.petmgmt.domain.entity.User;
 import com.example.petmgmt.domain.entity.VaccineRecord;
 import com.example.petmgmt.domain.enums.OrderStatus;
-import com.example.petmgmt.mapper.BoardingOrderMapper;
-import com.example.petmgmt.mapper.PetMapper;
-import com.example.petmgmt.mapper.UserMapper;
-import com.example.petmgmt.mapper.VaccineRecordMapper;
+import com.example.petmgmt.repository.BoardingOrderRepository;
+import com.example.petmgmt.repository.PetRepository;
+import com.example.petmgmt.repository.UserRepository;
+import com.example.petmgmt.repository.VaccineRecordRepository;
 import com.example.petmgmt.service.DashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,10 +24,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DashboardServiceImpl implements DashboardService {
 
-    private final UserMapper userMapper;
-    private final PetMapper petMapper;
-    private final BoardingOrderMapper boardingOrderMapper;
-    private final VaccineRecordMapper vaccineRecordMapper;
+    private final UserRepository userRepository;
+    private final PetRepository petRepository;
+    private final BoardingOrderRepository boardingOrderRepository;
+    private final VaccineRecordRepository vaccineRecordRepository;
 
     @Override
     public Map<String, Object> getOwnerOverview() {
@@ -36,28 +35,28 @@ public class DashboardServiceImpl implements DashboardService {
         if (user == null) return emptyOwner();
         Long ownerId = user.getId();
 
-        long petCount = petMapper.selectCount(new LambdaQueryWrapper<Pet>().eq(Pet::getOwnerId, ownerId));
-        List<Pet> myPets = petMapper.selectList(new LambdaQueryWrapper<Pet>().eq(Pet::getOwnerId, ownerId));
+        long petCount = petRepository.count(pet -> pet.getOwnerId().equals(ownerId));
+        List<Pet> myPets = petRepository.findAll(pet -> pet.getOwnerId().equals(ownerId));
         List<Long> petIds = myPets.stream().map(Pet::getId).collect(Collectors.toList());
 
         LocalDate today = LocalDate.now();
         LocalDate future = today.plusDays(30);
         long vaccineRemindCount = 0;
         if (!petIds.isEmpty()) {
-            vaccineRemindCount = vaccineRecordMapper.selectCount(
-                    new LambdaQueryWrapper<VaccineRecord>()
-                            .in(VaccineRecord::getPetId, petIds)
-                            .ge(VaccineRecord::getNextDueDate, today)
-                            .le(VaccineRecord::getNextDueDate, future)
+            vaccineRemindCount = vaccineRecordRepository.count(
+                    record -> petIds.contains(record.getPetId())
+                            && record.getNextDueDate() != null
+                            && !record.getNextDueDate().isBefore(today)
+                            && !record.getNextDueDate().isAfter(future)
             );
         }
 
-        long created = boardingOrderMapper.selectCount(new LambdaQueryWrapper<BoardingOrder>()
-                .eq(BoardingOrder::getOwnerId, ownerId).eq(BoardingOrder::getStatus, OrderStatus.CREATED));
-        long confirmed = boardingOrderMapper.selectCount(new LambdaQueryWrapper<BoardingOrder>()
-                .eq(BoardingOrder::getOwnerId, ownerId).eq(BoardingOrder::getStatus, OrderStatus.CONFIRMED));
-        long boarding = boardingOrderMapper.selectCount(new LambdaQueryWrapper<BoardingOrder>()
-                .eq(BoardingOrder::getOwnerId, ownerId).eq(BoardingOrder::getStatus, OrderStatus.BOARDING));
+        long created = boardingOrderRepository.count(order -> 
+                order.getOwnerId().equals(ownerId) && order.getStatus() == OrderStatus.CREATED);
+        long confirmed = boardingOrderRepository.count(order -> 
+                order.getOwnerId().equals(ownerId) && order.getStatus() == OrderStatus.CONFIRMED);
+        long boarding = boardingOrderRepository.count(order -> 
+                order.getOwnerId().equals(ownerId) && order.getStatus() == OrderStatus.BOARDING);
         long activeOrderCount = created + confirmed + boarding;
 
         Map<String, Object> map = new HashMap<>();
@@ -73,12 +72,12 @@ public class DashboardServiceImpl implements DashboardService {
         if (user == null) return emptyStaff();
         LocalDate today = LocalDate.now();
 
-        long todayCheckIn = boardingOrderMapper.selectCount(
-                new LambdaQueryWrapper<BoardingOrder>().eq(BoardingOrder::getStartDate, today));
-        long pendingConfirm = boardingOrderMapper.selectCount(
-                new LambdaQueryWrapper<BoardingOrder>().eq(BoardingOrder::getStatus, OrderStatus.CREATED));
-        long boardingNow = boardingOrderMapper.selectCount(
-                new LambdaQueryWrapper<BoardingOrder>().eq(BoardingOrder::getStatus, OrderStatus.BOARDING));
+        long todayCheckIn = boardingOrderRepository.count(
+                order -> order.getStartDate() != null && order.getStartDate().equals(today));
+        long pendingConfirm = boardingOrderRepository.count(
+                order -> order.getStatus() == OrderStatus.CREATED);
+        long boardingNow = boardingOrderRepository.count(
+                order -> order.getStatus() == OrderStatus.BOARDING);
 
         Map<String, Object> map = new HashMap<>();
         map.put("todayCheckIn", todayCheckIn);
@@ -89,7 +88,7 @@ public class DashboardServiceImpl implements DashboardService {
 
     private User getCurrentUser() {
         String username = SecurityUtils.getCurrentUsername();
-        return username == null ? null : userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
+        return username == null ? null : userRepository.findByUsername(username).orElse(null);
     }
 
     private static Map<String, Object> emptyOwner() {

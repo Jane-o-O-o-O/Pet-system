@@ -1,7 +1,5 @@
 package com.example.petmgmt.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.petmgmt.common.BizException;
 import com.example.petmgmt.common.ErrorCode;
 import com.example.petmgmt.common.PageResult;
@@ -9,23 +7,29 @@ import com.example.petmgmt.common.SecurityUtils;
 import com.example.petmgmt.domain.entity.Pet;
 import com.example.petmgmt.domain.entity.User;
 import com.example.petmgmt.domain.enums.Role;
-import com.example.petmgmt.mapper.PetMapper;
-import com.example.petmgmt.mapper.UserMapper;
+import com.example.petmgmt.repository.PetRepository;
+import com.example.petmgmt.repository.UserRepository;
 import com.example.petmgmt.service.PetService;
+import com.example.petmgmt.storage.PageHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class PetServiceImpl implements PetService {
 
-    private final PetMapper petMapper;
-    private final UserMapper userMapper;
+    private final PetRepository petRepository;
+    private final UserRepository userRepository;
 
     private User getCurrentUser() {
         String username = SecurityUtils.getCurrentUsername();
-        return userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new BizException(ErrorCode.USER_NOT_FOUND));
     }
 
     @Override
@@ -34,34 +38,41 @@ public class PetServiceImpl implements PetService {
         if (user.getRole() == Role.OWNER) {
             pet.setOwnerId(user.getId());
         } else if (pet.getOwnerId() != null) {
-            User owner = userMapper.selectById(pet.getOwnerId());
-            if (owner == null) throw new BizException(ErrorCode.USER_NOT_FOUND);
+            User owner = userRepository.findById(pet.getOwnerId())
+                    .orElseThrow(() -> new BizException(ErrorCode.USER_NOT_FOUND));
         }
-        petMapper.insert(pet);
+        petRepository.save(pet);
     }
 
     @Override
     public PageResult<Pet> getPets(int page, int size, String keyword, String species) {
         User user = getCurrentUser();
-        LambdaQueryWrapper<Pet> query = new LambdaQueryWrapper<>();
-        if (user.getRole() == Role.OWNER) {
-            query.eq(Pet::getOwnerId, user.getId());
-        }
-        if (StringUtils.hasText(keyword)) {
-            query.like(Pet::getName, keyword);
-        }
-        if (StringUtils.hasText(species)) {
-            query.eq(Pet::getSpecies, species);
-        }
-
-        Page<Pet> petPage = petMapper.selectPage(new Page<>(page, size), query);
-        return new PageResult<>(petPage.getRecords(), petPage.getTotal(), petPage.getCurrent(), petPage.getSize());
+        
+        List<Pet> pets = petRepository.findAll(pet -> {
+            if (user.getRole() == Role.OWNER && !pet.getOwnerId().equals(user.getId())) {
+                return false;
+            }
+            if (StringUtils.hasText(keyword) && !pet.getName().contains(keyword)) {
+                return false;
+            }
+            if (StringUtils.hasText(species) && !species.equals(pet.getSpecies())) {
+                return false;
+            }
+            return true;
+        });
+        
+        pets = pets.stream()
+                .sorted(Comparator.comparing(Pet::getCreatedAt).reversed())
+                .collect(Collectors.toList());
+        
+        PageHelper.PageData<Pet> pageData = PageHelper.paginate(pets, page, size);
+        return new PageResult<>(pageData.getRecords(), pageData.getTotal(), pageData.getCurrent(), pageData.getSize());
     }
 
     @Override
     public Pet getPetById(Long id) {
-        Pet pet = petMapper.selectById(id);
-        if (pet == null) throw new BizException(ErrorCode.PET_NOT_FOUND);
+        Pet pet = petRepository.findById(id)
+                .orElseThrow(() -> new BizException(ErrorCode.PET_NOT_FOUND));
 
         User user = getCurrentUser();
         if (user.getRole() == Role.OWNER && !pet.getOwnerId().equals(user.getId())) {
@@ -82,12 +93,12 @@ public class PetServiceImpl implements PetService {
         if (pet.getSterilized() != null) existing.setSterilized(pet.getSterilized());
         if (pet.getPhotoUrl() != null) existing.setPhotoUrl(pet.getPhotoUrl());
         if (pet.getRemark() != null) existing.setRemark(pet.getRemark());
-        petMapper.updateById(existing);
+        petRepository.save(existing);
     }
 
     @Override
     public void deletePet(Long id) {
         getPetById(id);
-        petMapper.deleteById(id);
+        petRepository.deleteById(id);
     }
 }

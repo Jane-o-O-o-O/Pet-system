@@ -1,6 +1,5 @@
 package com.example.petmgmt.domain.enums;
 
-import com.baomidou.mybatisplus.annotation.EnumValue;
 import lombok.Getter;
 
 @Getter
@@ -9,7 +8,6 @@ public enum Role {
     STAFF("STAFF"),
     OWNER("OWNER");
 
-    @EnumValue
     private final String value;
 
     Role(String value) {

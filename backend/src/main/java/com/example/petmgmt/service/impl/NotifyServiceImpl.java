@@ -1,27 +1,30 @@
 package com.example.petmgmt.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.petmgmt.common.PageResult;
 import com.example.petmgmt.common.SecurityUtils;
 import com.example.petmgmt.domain.entity.Notification;
 import com.example.petmgmt.domain.entity.User;
-import com.example.petmgmt.mapper.NotificationMapper;
-import com.example.petmgmt.mapper.UserMapper;
+import com.example.petmgmt.repository.NotificationRepository;
+import com.example.petmgmt.repository.UserRepository;
 import com.example.petmgmt.service.NotifyService;
+import com.example.petmgmt.storage.PageHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class NotifyServiceImpl implements NotifyService {
 
-    private final NotificationMapper notificationMapper;
-    private final UserMapper userMapper;
+    private final NotificationRepository notificationRepository;
+    private final UserRepository userRepository;
 
     private User getCurrentUser() {
         String username = SecurityUtils.getCurrentUsername();
-        return userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
+        return userRepository.findByUsername(username).orElse(null);
     }
 
     @Override
@@ -31,25 +34,29 @@ public class NotifyServiceImpl implements NotifyService {
         notification.setTitle(title);
         notification.setContent(content);
         notification.setReadFlag(0);
-        notificationMapper.insert(notification);
+        notificationRepository.save(notification);
     }
 
     @Override
     public PageResult<Notification> getMyNotifications(int page, int size) {
         User user = getCurrentUser();
-        Page<Notification> nPage = notificationMapper.selectPage(
-                new Page<>(page, size),
-                new LambdaQueryWrapper<Notification>().eq(Notification::getUserId, user.getId()).orderByDesc(Notification::getCreatedAt)
-        );
-        return new PageResult<>(nPage.getRecords(), nPage.getTotal(), nPage.getCurrent(), nPage.getSize());
+        List<Notification> notifications = notificationRepository.findAll(
+                notification -> notification.getUserId().equals(user.getId())
+        ).stream()
+                .sorted(Comparator.comparing(Notification::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .collect(Collectors.toList());
+        
+        PageHelper.PageData<Notification> pageData = PageHelper.paginate(notifications, page, size);
+        return new PageResult<>(pageData.getRecords(), pageData.getTotal(), pageData.getCurrent(), pageData.getSize());
     }
 
     @Override
     public void markAsRead(Long id) {
-        Notification notification = notificationMapper.selectById(id);
-        if (notification != null && notification.getUserId().equals(getCurrentUser().getId())) {
-            notification.setReadFlag(1);
-            notificationMapper.updateById(notification);
-        }
+        notificationRepository.findById(id).ifPresent(notification -> {
+            if (notification.getUserId().equals(getCurrentUser().getId())) {
+                notification.setReadFlag(1);
+                notificationRepository.save(notification);
+            }
+        });
     }
 }

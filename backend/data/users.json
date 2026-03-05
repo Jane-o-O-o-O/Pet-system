@@ -1,0 +1,11 @@
+[ {
+  "id" : 1,
+  "username" : "admin",
+  "passwordHash" : "$2a$10$ZFQzZ8qA5IWbHQVHc4cnZepmgyioilxK62wix8iqAAB1U3C3uI.sW",
+  "phone" : null,
+  "email" : null,
+  "role" : "ADMIN",
+  "status" : 1,
+  "createdAt" : [ 2026, 3, 5, 22, 44, 25, 727150500 ],
+  "updatedAt" : [ 2026, 3, 5, 22, 44, 25, 727150500 ]
+} ]

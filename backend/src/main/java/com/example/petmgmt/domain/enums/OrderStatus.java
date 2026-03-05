@@ -1,6 +1,5 @@
 package com.example.petmgmt.domain.enums;
 
-import com.baomidou.mybatisplus.annotation.EnumValue;
 import lombok.Getter;
 
 @Getter
@@ -11,7 +10,6 @@ public enum OrderStatus {
     COMPLETED("COMPLETED"),
     CANCELLED("CANCELLED");
 
-    @EnumValue
     private final String value;
 
     OrderStatus(String value) {

@@ -1,7 +1,5 @@
 package com.example.petmgmt.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.petmgmt.common.BizException;
 import com.example.petmgmt.common.ErrorCode;
 import com.example.petmgmt.common.PageResult;
@@ -13,36 +11,38 @@ import com.example.petmgmt.domain.enums.OrderStatus;
 import com.example.petmgmt.domain.enums.Role;
 import com.example.petmgmt.domain.vo.BoardingOrderVO;
 import org.springframework.beans.BeanUtils;
-import com.example.petmgmt.mapper.BoardingOrderMapper;
-import com.example.petmgmt.mapper.PetMapper;
-import com.example.petmgmt.mapper.UserMapper;
+import com.example.petmgmt.repository.BoardingOrderRepository;
+import com.example.petmgmt.repository.PetRepository;
+import com.example.petmgmt.repository.UserRepository;
 import com.example.petmgmt.service.BoardingOrderService;
+import com.example.petmgmt.storage.PageHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class BoardingOrderServiceImpl implements BoardingOrderService {
 
-    private final BoardingOrderMapper boardingOrderMapper;
-    private final PetMapper petMapper;
-    private final UserMapper userMapper;
+    private final BoardingOrderRepository boardingOrderRepository;
+    private final PetRepository petRepository;
+    private final UserRepository userRepository;
 
     private User getCurrentUser() {
         String username = SecurityUtils.getCurrentUsername();
-        return userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new BizException(ErrorCode.USER_NOT_FOUND));
     }
 
     @Override
-    @Transactional
     public void createOrder(BoardingOrder order) {
         User user = getCurrentUser();
-        Pet pet = petMapper.selectById(order.getPetId());
-        if (pet == null) throw new BizException(ErrorCode.PET_NOT_FOUND);
+        Pet pet = petRepository.findById(order.getPetId())
+                .orElseThrow(() -> new BizException(ErrorCode.PET_NOT_FOUND));
 
         if (user.getRole() == Role.OWNER && !pet.getOwnerId().equals(user.getId())) {
             throw new BizException(ErrorCode.PET_ACCESS_DENIED);
@@ -60,51 +60,53 @@ public class BoardingOrderServiceImpl implements BoardingOrderService {
         order.setOwnerId(pet.getOwnerId());
         order.setOrderNo("BO" + System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         order.setStatus(OrderStatus.CREATED);
-        boardingOrderMapper.insert(order);
+        boardingOrderRepository.save(order);
     }
 
     @Override
     public PageResult<BoardingOrderVO> getOrders(int page, int size, OrderStatus status) {
         User user = getCurrentUser();
-        LambdaQueryWrapper<BoardingOrder> query = new LambdaQueryWrapper<>();
-        if (user.getRole() == Role.OWNER) {
-            query.eq(BoardingOrder::getOwnerId, user.getId());
-        }
-        if (status != null) {
-            query.eq(BoardingOrder::getStatus, status);
-        }
-        query.orderByDesc(BoardingOrder::getCreatedAt);
-
-        Page<BoardingOrder> orderPage = boardingOrderMapper.selectPage(new Page<>(page, size), query);
         
-        java.util.List<BoardingOrderVO> voList = orderPage.getRecords().stream()
+        var orders = boardingOrderRepository.findAll(order -> {
+            if (user.getRole() == Role.OWNER && !order.getOwnerId().equals(user.getId())) {
+                return false;
+            }
+            if (status != null && order.getStatus() != status) {
+                return false;
+            }
+            return true;
+        }).stream()
+            .sorted(Comparator.comparing(BoardingOrder::getCreatedAt).reversed())
+            .collect(Collectors.toList());
+        
+        PageHelper.PageData<BoardingOrder> pageData = PageHelper.paginate(orders, page, size);
+        
+        var voList = pageData.getRecords().stream()
             .map(this::convertToVO)
-            .collect(java.util.stream.Collectors.toList());
+            .collect(Collectors.toList());
         
-        return new PageResult<>(voList, orderPage.getTotal(), orderPage.getCurrent(), orderPage.getSize());
+        return new PageResult<>(voList, pageData.getTotal(), pageData.getCurrent(), pageData.getSize());
     }
     
     private BoardingOrderVO convertToVO(BoardingOrder order) {
         BoardingOrderVO vo = new BoardingOrderVO();
         BeanUtils.copyProperties(order, vo);
         
-        Pet pet = petMapper.selectById(order.getPetId());
-        if (pet != null) {
+        petRepository.findById(order.getPetId()).ifPresent(pet -> {
             vo.setPetName(pet.getName());
-        }
+        });
         
-        User owner = userMapper.selectById(order.getOwnerId());
-        if (owner != null) {
+        userRepository.findById(order.getOwnerId()).ifPresent(owner -> {
             vo.setOwnerName(owner.getUsername());
-        }
+        });
         
         return vo;
     }
 
     @Override
     public BoardingOrder getOrderById(Long id) {
-        BoardingOrder order = boardingOrderMapper.selectById(id);
-        if (order == null) throw new BizException(ErrorCode.NOT_FOUND);
+        BoardingOrder order = boardingOrderRepository.findById(id)
+                .orElseThrow(() -> new BizException(ErrorCode.NOT_FOUND));
         User user = getCurrentUser();
         if (user.getRole() == Role.OWNER && !order.getOwnerId().equals(user.getId())) {
             throw new BizException(ErrorCode.FORBIDDEN);
@@ -113,7 +115,6 @@ public class BoardingOrderServiceImpl implements BoardingOrderService {
     }
 
     @Override
-    @Transactional
     public void updateStatus(Long id, OrderStatus newStatus) {
         BoardingOrder order = getOrderById(id);
         User user = getCurrentUser();
@@ -139,6 +140,6 @@ public class BoardingOrderServiceImpl implements BoardingOrderService {
         if (user.getRole() == Role.STAFF || user.getRole() == Role.ADMIN) {
             order.setStaffId(user.getId());
         }
-        boardingOrderMapper.updateById(order);
+        boardingOrderRepository.save(order);
     }
 }

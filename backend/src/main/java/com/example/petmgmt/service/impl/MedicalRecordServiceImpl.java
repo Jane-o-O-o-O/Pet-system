@@ -1,7 +1,5 @@
 package com.example.petmgmt.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.petmgmt.common.BizException;
 import com.example.petmgmt.common.ErrorCode;
 import com.example.petmgmt.common.PageResult;
@@ -10,29 +8,34 @@ import com.example.petmgmt.domain.entity.MedicalRecord;
 import com.example.petmgmt.domain.entity.Pet;
 import com.example.petmgmt.domain.entity.User;
 import com.example.petmgmt.domain.enums.Role;
-import com.example.petmgmt.mapper.MedicalRecordMapper;
-import com.example.petmgmt.mapper.PetMapper;
-import com.example.petmgmt.mapper.UserMapper;
+import com.example.petmgmt.repository.MedicalRecordRepository;
+import com.example.petmgmt.repository.PetRepository;
+import com.example.petmgmt.repository.UserRepository;
 import com.example.petmgmt.service.MedicalRecordService;
+import com.example.petmgmt.storage.PageHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.Comparator;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class MedicalRecordServiceImpl implements MedicalRecordService {
 
-    private final MedicalRecordMapper medicalRecordMapper;
-    private final PetMapper petMapper;
-    private final UserMapper userMapper;
+    private final MedicalRecordRepository medicalRecordRepository;
+    private final PetRepository petRepository;
+    private final UserRepository userRepository;
 
     private User getCurrentUser() {
         String username = SecurityUtils.getCurrentUsername();
-        return userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new BizException(ErrorCode.USER_NOT_FOUND));
     }
 
     private void checkPetAccess(Long petId) {
-        Pet pet = petMapper.selectById(petId);
-        if (pet == null) throw new BizException(ErrorCode.PET_NOT_FOUND);
+        Pet pet = petRepository.findById(petId)
+                .orElseThrow(() -> new BizException(ErrorCode.PET_NOT_FOUND));
         User user = getCurrentUser();
         if (user.getRole() == Role.OWNER && !pet.getOwnerId().equals(user.getId())) {
             throw new BizException(ErrorCode.PET_ACCESS_DENIED);
@@ -48,23 +51,25 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
         }
         record.setPetId(petId);
         record.setCreatedBy(user.getId());
-        medicalRecordMapper.insert(record);
+        medicalRecordRepository.save(record);
     }
 
     @Override
     public PageResult<MedicalRecord> getRecordsByPet(Long petId, int page, int size) {
         checkPetAccess(petId);
-        Page<MedicalRecord> mrPage = medicalRecordMapper.selectPage(
-                new Page<>(page, size),
-                new LambdaQueryWrapper<MedicalRecord>().eq(MedicalRecord::getPetId, petId).orderByDesc(MedicalRecord::getVisitDate)
-        );
-        return new PageResult<>(mrPage.getRecords(), mrPage.getTotal(), mrPage.getCurrent(), mrPage.getSize());
+        var records = medicalRecordRepository.findAll(r -> r.getPetId().equals(petId))
+                .stream()
+                .sorted(Comparator.comparing(MedicalRecord::getVisitDate).reversed())
+                .collect(Collectors.toList());
+        
+        PageHelper.PageData<MedicalRecord> pageData = PageHelper.paginate(records, page, size);
+        return new PageResult<>(pageData.getRecords(), pageData.getTotal(), pageData.getCurrent(), pageData.getSize());
     }
 
     @Override
     public MedicalRecord getRecordById(Long id) {
-        MedicalRecord record = medicalRecordMapper.selectById(id);
-        if (record == null) throw new BizException(ErrorCode.NOT_FOUND);
+        MedicalRecord record = medicalRecordRepository.findById(id)
+                .orElseThrow(() -> new BizException(ErrorCode.NOT_FOUND));
         checkPetAccess(record.getPetId());
         return record;
     }
@@ -76,9 +81,13 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
         if (user.getRole() == Role.OWNER) {
             throw new BizException(ErrorCode.FORBIDDEN);
         }
-        record.setId(id);
-        record.setPetId(existing.getPetId());
-        medicalRecordMapper.updateById(record);
+        existing.setDoctorName(record.getDoctorName());
+        existing.setVisitDate(record.getVisitDate());
+        existing.setComplaint(record.getComplaint());
+        existing.setDiagnosis(record.getDiagnosis());
+        existing.setTreatment(record.getTreatment());
+        existing.setAttachments(record.getAttachments());
+        medicalRecordRepository.save(existing);
     }
 
     @Override
@@ -88,6 +97,6 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
         if (user.getRole() == Role.OWNER) {
             throw new BizException(ErrorCode.FORBIDDEN);
         }
-        medicalRecordMapper.deleteById(id);
+        medicalRecordRepository.deleteById(id);
     }
 }

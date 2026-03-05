@@ -1,7 +1,5 @@
 package com.example.petmgmt.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.petmgmt.common.BizException;
 import com.example.petmgmt.common.ErrorCode;
 import com.example.petmgmt.common.PageResult;
@@ -12,15 +10,17 @@ import com.example.petmgmt.domain.entity.User;
 import com.example.petmgmt.domain.entity.VaccineRecord;
 import com.example.petmgmt.domain.enums.RemindStatus;
 import com.example.petmgmt.domain.enums.Role;
-import com.example.petmgmt.mapper.PetMapper;
-import com.example.petmgmt.mapper.SysConfigMapper;
-import com.example.petmgmt.mapper.UserMapper;
-import com.example.petmgmt.mapper.VaccineRecordMapper;
+import com.example.petmgmt.repository.PetRepository;
+import com.example.petmgmt.repository.SysConfigRepository;
+import com.example.petmgmt.repository.UserRepository;
+import com.example.petmgmt.repository.VaccineRecordRepository;
 import com.example.petmgmt.service.VaccineService;
+import com.example.petmgmt.storage.PageHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,19 +28,20 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class VaccineServiceImpl implements VaccineService {
 
-    private final VaccineRecordMapper vaccineRecordMapper;
-    private final PetMapper petMapper;
-    private final UserMapper userMapper;
-    private final SysConfigMapper sysConfigMapper;
+    private final VaccineRecordRepository vaccineRecordRepository;
+    private final PetRepository petRepository;
+    private final UserRepository userRepository;
+    private final SysConfigRepository sysConfigRepository;
 
     private User getCurrentUser() {
         String username = SecurityUtils.getCurrentUsername();
-        return userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new BizException(ErrorCode.USER_NOT_FOUND));
     }
 
     private void checkPetAccess(Long petId) {
-        Pet pet = petMapper.selectById(petId);
-        if (pet == null) throw new BizException(ErrorCode.PET_NOT_FOUND);
+        Pet pet = petRepository.findById(petId)
+                .orElseThrow(() -> new BizException(ErrorCode.PET_NOT_FOUND));
         User user = getCurrentUser();
         if (user.getRole() == Role.OWNER && !pet.getOwnerId().equals(user.getId())) {
             throw new BizException(ErrorCode.PET_ACCESS_DENIED);
@@ -58,50 +59,55 @@ public class VaccineServiceImpl implements VaccineService {
         }
         
         if (record.getRemindDaysBefore() == null) {
-            SysConfig config = sysConfigMapper.selectById("VACCINE_REMIND_DAYS_DEFAULT");
+            SysConfig config = sysConfigRepository.findByKey("VACCINE_REMIND_DAYS_DEFAULT").orElse(null);
             record.setRemindDaysBefore(config != null ? Integer.parseInt(config.getConfigValue()) : 7);
         }
         
         record.setPetId(petId);
         record.setCreatedBy(user.getId());
         record.setRemindStatus(RemindStatus.PENDING);
-        vaccineRecordMapper.insert(record);
+        vaccineRecordRepository.save(record);
     }
 
     @Override
     public PageResult<VaccineRecord> getVaccinesByPet(Long petId, int page, int size) {
         checkPetAccess(petId);
-        Page<VaccineRecord> vrPage = vaccineRecordMapper.selectPage(
-                new Page<>(page, size),
-                new LambdaQueryWrapper<VaccineRecord>().eq(VaccineRecord::getPetId, petId).orderByDesc(VaccineRecord::getShotDate)
-        );
-        return new PageResult<>(vrPage.getRecords(), vrPage.getTotal(), vrPage.getCurrent(), vrPage.getSize());
+        List<VaccineRecord> records = vaccineRecordRepository.findAll(r -> r.getPetId().equals(petId))
+                .stream()
+                .sorted(Comparator.comparing(VaccineRecord::getShotDate).reversed())
+                .collect(Collectors.toList());
+        
+        PageHelper.PageData<VaccineRecord> pageData = PageHelper.paginate(records, page, size);
+        return new PageResult<>(pageData.getRecords(), pageData.getTotal(), pageData.getCurrent(), pageData.getSize());
     }
 
     @Override
     public void updateVaccine(Long id, VaccineRecord record) {
-        VaccineRecord existing = vaccineRecordMapper.selectById(id);
-        if (existing == null) throw new BizException(ErrorCode.NOT_FOUND);
+        VaccineRecord existing = vaccineRecordRepository.findById(id)
+                .orElseThrow(() -> new BizException(ErrorCode.NOT_FOUND));
         checkPetAccess(existing.getPetId());
         User user = getCurrentUser();
         if (user.getRole() == Role.OWNER) throw new BizException(ErrorCode.FORBIDDEN);
         
-        record.setId(id);
-        record.setPetId(existing.getPetId());
+        existing.setVaccineName(record.getVaccineName());
+        existing.setShotDate(record.getShotDate());
+        existing.setNextDueDate(record.getNextDueDate());
+        existing.setRemindDaysBefore(record.getRemindDaysBefore());
+        
         if (record.getNextDueDate() != null && !record.getNextDueDate().equals(existing.getNextDueDate())) {
-            record.setRemindStatus(RemindStatus.PENDING);
+            existing.setRemindStatus(RemindStatus.PENDING);
         }
-        vaccineRecordMapper.updateById(record);
+        vaccineRecordRepository.save(existing);
     }
 
     @Override
     public void deleteVaccine(Long id) {
-        VaccineRecord record = vaccineRecordMapper.selectById(id);
-        if (record == null) throw new BizException(ErrorCode.NOT_FOUND);
+        VaccineRecord record = vaccineRecordRepository.findById(id)
+                .orElseThrow(() -> new BizException(ErrorCode.NOT_FOUND));
         checkPetAccess(record.getPetId());
         User user = getCurrentUser();
         if (user.getRole() == Role.OWNER) throw new BizException(ErrorCode.FORBIDDEN);
-        vaccineRecordMapper.deleteById(id);
+        vaccineRecordRepository.deleteById(id);
     }
 
     @Override
@@ -110,16 +116,24 @@ public class VaccineServiceImpl implements VaccineService {
         LocalDate today = LocalDate.now();
         LocalDate future = today.plusDays(days);
         
-        LambdaQueryWrapper<VaccineRecord> query = new LambdaQueryWrapper<VaccineRecord>()
-                .ge(VaccineRecord::getNextDueDate, today)
-                .le(VaccineRecord::getNextDueDate, future);
+        List<VaccineRecord> records = vaccineRecordRepository.findAll(r -> {
+            if (r.getNextDueDate() == null) return false;
+            if (r.getNextDueDate().isBefore(today)) return false;
+            if (r.getNextDueDate().isAfter(future)) return false;
+            return true;
+        });
         
         if (user.getRole() == Role.OWNER) {
-            List<Pet> myPets = petMapper.selectList(new LambdaQueryWrapper<Pet>().eq(Pet::getOwnerId, user.getId()));
-            if (myPets.isEmpty()) return List.of();
-            query.in(VaccineRecord::getPetId, myPets.stream().map(Pet::getId).collect(Collectors.toList()));
+            List<Long> myPetIds = petRepository.findAll(p -> p.getOwnerId().equals(user.getId()))
+                    .stream()
+                    .map(Pet::getId)
+                    .collect(Collectors.toList());
+            if (myPetIds.isEmpty()) return List.of();
+            records = records.stream()
+                    .filter(r -> myPetIds.contains(r.getPetId()))
+                    .collect(Collectors.toList());
         }
         
-        return vaccineRecordMapper.selectList(query);
+        return records;
     }
 }

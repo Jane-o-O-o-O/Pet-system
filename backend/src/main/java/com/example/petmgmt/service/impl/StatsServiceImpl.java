@@ -1,17 +1,16 @@
 package com.example.petmgmt.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.petmgmt.domain.entity.BoardingOrder;
 import com.example.petmgmt.domain.entity.Pet;
 import com.example.petmgmt.domain.entity.User;
 import com.example.petmgmt.domain.entity.VaccineRecord;
 import com.example.petmgmt.domain.enums.OrderStatus;
 import com.example.petmgmt.domain.vo.BoardingOrderVO;
-import com.example.petmgmt.mapper.BoardingOrderMapper;
-import com.example.petmgmt.mapper.MedicalRecordMapper;
-import com.example.petmgmt.mapper.PetMapper;
-import com.example.petmgmt.mapper.UserMapper;
-import com.example.petmgmt.mapper.VaccineRecordMapper;
+import com.example.petmgmt.repository.BoardingOrderRepository;
+import com.example.petmgmt.repository.MedicalRecordRepository;
+import com.example.petmgmt.repository.PetRepository;
+import com.example.petmgmt.repository.UserRepository;
+import com.example.petmgmt.repository.VaccineRecordRepository;
 import com.example.petmgmt.service.StatsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -20,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.math.RoundingMode;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,19 +30,19 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class StatsServiceImpl implements StatsService {
 
-    private final UserMapper userMapper;
-    private final PetMapper petMapper;
-    private final MedicalRecordMapper medicalRecordMapper;
-    private final BoardingOrderMapper boardingOrderMapper;
-    private final VaccineRecordMapper vaccineRecordMapper;
+    private final UserRepository userRepository;
+    private final PetRepository petRepository;
+    private final MedicalRecordRepository medicalRecordRepository;
+    private final BoardingOrderRepository boardingOrderRepository;
+    private final VaccineRecordRepository vaccineRecordRepository;
 
     @Override
     public Map<String, Object> getOverview() {
         Map<String, Object> stats = new HashMap<>();
-        stats.put("users", userMapper.selectCount(null));
-        stats.put("pets", petMapper.selectCount(null));
-        stats.put("medicalRecords", medicalRecordMapper.selectCount(null));
-                List<BoardingOrder> allOrders = boardingOrderMapper.selectList(null);
+        stats.put("users", userRepository.count(user -> true));
+        stats.put("pets", petRepository.count(pet -> true));
+        stats.put("medicalRecords", medicalRecordRepository.count(record -> true));
+                List<BoardingOrder> allOrders = boardingOrderRepository.findAll(order -> true);
                 stats.put("orders", allOrders.size());
 
                 Map<String, Long> orderStatusCounts = buildStatusCounts(allOrders);
@@ -54,26 +54,27 @@ public class StatsServiceImpl implements StatsService {
                 stats.put("cancelledOrders", orderStatusCounts.get(OrderStatus.CANCELLED.name()));
 
         LocalDate today = LocalDate.now();
-        stats.put("todayOrders", boardingOrderMapper.selectCount(
-                new LambdaQueryWrapper<BoardingOrder>().eq(BoardingOrder::getStartDate, today)));
+        stats.put("todayOrders", boardingOrderRepository.count(
+                order -> order.getStartDate() != null && order.getStartDate().equals(today)));
 
         LocalDate future = today.plusDays(30);
-        stats.put("vaccineDueIn30Days", vaccineRecordMapper.selectCount(
-                new LambdaQueryWrapper<VaccineRecord>()
-                        .ge(VaccineRecord::getNextDueDate, today)
-                        .le(VaccineRecord::getNextDueDate, future)
+        stats.put("vaccineDueIn30Days", vaccineRecordRepository.count(
+                record -> record.getNextDueDate() != null
+                        && !record.getNextDueDate().isBefore(today)
+                        && !record.getNextDueDate().isAfter(future)
         ));
         return stats;
     }
 
     @Override
     public Map<String, Object> getBoardingStats(LocalDate from, LocalDate to) {
-        List<BoardingOrder> orders = boardingOrderMapper.selectList(
-                new LambdaQueryWrapper<BoardingOrder>()
-                        .ge(BoardingOrder::getStartDate, from)
-                        .le(BoardingOrder::getStartDate, to)
-                        .orderByDesc(BoardingOrder::getCreatedAt)
-        );
+        List<BoardingOrder> orders = boardingOrderRepository.findAll(
+                order -> order.getStartDate() != null
+                        && !order.getStartDate().isBefore(from)
+                        && !order.getStartDate().isAfter(to)
+        ).stream()
+                .sorted(Comparator.comparing(BoardingOrder::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .collect(Collectors.toList());
 
         BigDecimal totalRevenue = orders.stream()
                 .map(BoardingOrder::getPriceTotal)
@@ -107,15 +108,13 @@ public class StatsServiceImpl implements StatsService {
         BoardingOrderVO vo = new BoardingOrderVO();
         BeanUtils.copyProperties(order, vo);
         
-        Pet pet = petMapper.selectById(order.getPetId());
-        if (pet != null) {
+        petRepository.findById(order.getPetId()).ifPresent(pet -> {
             vo.setPetName(pet.getName());
-        }
+        });
         
-        User owner = userMapper.selectById(order.getOwnerId());
-        if (owner != null) {
+        userRepository.findById(order.getOwnerId()).ifPresent(owner -> {
             vo.setOwnerName(owner.getUsername());
-        }
+        });
         
         return vo;
     }
@@ -125,10 +124,10 @@ public class StatsServiceImpl implements StatsService {
         LocalDate today = LocalDate.now();
         LocalDate future = today.plusDays(days);
 
-        List<VaccineRecord> list = vaccineRecordMapper.selectList(
-                new LambdaQueryWrapper<VaccineRecord>()
-                        .ge(VaccineRecord::getNextDueDate, today)
-                        .le(VaccineRecord::getNextDueDate, future)
+        List<VaccineRecord> list = vaccineRecordRepository.findAll(
+                record -> record.getNextDueDate() != null
+                        && !record.getNextDueDate().isBefore(today)
+                        && !record.getNextDueDate().isAfter(future)
         );
 
         Map<String, Object> stats = new HashMap<>();
@@ -164,7 +163,7 @@ public class StatsServiceImpl implements StatsService {
         Map<String, Object> stats = new HashMap<>();
 
         // 疫苗库存统计（按疫苗名称分组计数）
-        List<VaccineRecord> allVaccines = vaccineRecordMapper.selectList(null);
+        List<VaccineRecord> allVaccines = vaccineRecordRepository.findAll(record -> true);
         Map<String, Long> vaccineInventory = allVaccines.stream()
                 .filter(v -> v.getVaccineName() != null)
                 .collect(Collectors.groupingBy(VaccineRecord::getVaccineName, Collectors.counting()));
@@ -172,9 +171,8 @@ public class StatsServiceImpl implements StatsService {
         stats.put("totalVaccineRecords", allVaccines.size());
 
         // 当前寄养中的订单（CONFIRMED 和 BOARDING 状态）
-        List<BoardingOrder> activeBoardings = boardingOrderMapper.selectList(
-                new LambdaQueryWrapper<BoardingOrder>()
-                        .in(BoardingOrder::getStatus, OrderStatus.CONFIRMED, OrderStatus.BOARDING)
+        List<BoardingOrder> activeBoardings = boardingOrderRepository.findAll(
+                order -> order.getStatus() == OrderStatus.CONFIRMED || order.getStatus() == OrderStatus.BOARDING
         );
 
         // 按房型统计当前使用数量
@@ -208,7 +206,7 @@ public class StatsServiceImpl implements StatsService {
         stats.put("totalActiveBoardings", activeBoardings.size());
 
         // 当前订单状态分布
-        List<BoardingOrder> allOrders = boardingOrderMapper.selectList(null);
+        List<BoardingOrder> allOrders = boardingOrderRepository.findAll(order -> true);
         Map<String, Long> statusDistribution = buildStatusCounts(allOrders);
         stats.put("statusDistribution", statusDistribution);
 

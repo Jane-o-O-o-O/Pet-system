@@ -14,6 +14,60 @@
 - MySQL 8.x
 - Maven 3.8+
 
+## Docker 部署（推荐）
+
+项目根目录已提供 `docker-compose.yml`，可一键启动 MySQL、后端和前端。
+
+### 1. 启动服务
+
+```bash
+# 可选：先复制环境变量模板
+cp .env.example .env
+
+docker compose up -d --build
+```
+
+### 2. 查看服务状态与日志
+
+```bash
+docker compose ps
+docker compose logs -f
+```
+
+### 3. 访问地址
+
+- 前端: http://localhost:3000
+- 后端 API: http://localhost:8080/api
+- MySQL: localhost:3306
+
+### 4. 停止服务
+
+```bash
+docker compose down
+```
+
+### 5. 彻底重置（含数据库数据）
+
+```bash
+docker compose down -v
+```
+
+### 6. 可选环境变量
+
+可在执行前设置环境变量自定义密码/密钥：
+
+```bash
+# Linux/Mac
+export DB_PASSWORD=your_password
+export JWT_SECRET=your_secret_key
+
+# Windows PowerShell
+$env:DB_PASSWORD="your_password"
+$env:JWT_SECRET="your_secret_key"
+```
+
+> 首次启动会自动执行 `backend/src/main/resources/init.sql` 初始化数据库和默认管理员账号。
+
 ## 快速启动
 
 ### 1. 初始化数据库

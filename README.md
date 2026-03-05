@@ -14,6 +14,30 @@
 
 ---
 
+## Docker 一键部署（推荐）
+
+在项目根目录执行：
+
+```bash
+docker compose up -d --build
+```
+
+访问地址：
+
+- 前端：http://localhost:3000
+- 后端 API：http://localhost:8080/api
+
+常用命令：
+
+```bash
+docker compose ps
+docker compose logs -f
+docker compose down
+docker compose down -v
+```
+
+---
+
 ## 二、启动步骤
 
 ### 第一步：初始化数据库（首次运行必须执行）
