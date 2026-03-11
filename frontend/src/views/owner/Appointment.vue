@@ -205,12 +205,16 @@ onMounted(() => {
   fetchPets()
   if (route.query.action === 'add') {
     handleAdd()
+  } else {
+    dialogVisible.value = false
   }
 })
 
 watch(() => route.query.action, (action) => {
   if (action === 'add') {
     handleAdd()
+  } else {
+    dialogVisible.value = false
   }
 })
 </script>

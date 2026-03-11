@@ -3,6 +3,7 @@ package com.example.petmgmt.controller;
 import com.example.petmgmt.common.ApiResponse;
 import com.example.petmgmt.common.PageResult;
 import com.example.petmgmt.domain.entity.Pet;
+import com.example.petmgmt.domain.vo.PetVO;
 import com.example.petmgmt.service.PetService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +22,7 @@ public class PetController {
     }
 
     @GetMapping
-    public ApiResponse<PageResult<Pet>> getPets(
+    public ApiResponse<PageResult<PetVO>> getPets(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String keyword,

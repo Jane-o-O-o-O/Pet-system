@@ -9,7 +9,7 @@
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="name" label="名字" />
       <el-table-column prop="species" label="种类" />
-      <el-table-column prop="ownerId" label="主人ID" width="80" />
+      <el-table-column prop="ownerName" label="主人" width="120" />
       <el-table-column label="操作" width="350">
         <template #default="scope">
           <el-button link type="primary" @click="handleRecord(scope.row, 'medical')">录入医疗</el-button>

@@ -7,11 +7,13 @@ import com.example.petmgmt.common.SecurityUtils;
 import com.example.petmgmt.domain.entity.Pet;
 import com.example.petmgmt.domain.entity.User;
 import com.example.petmgmt.domain.enums.Role;
+import com.example.petmgmt.domain.vo.PetVO;
 import com.example.petmgmt.repository.PetRepository;
 import com.example.petmgmt.repository.UserRepository;
 import com.example.petmgmt.service.PetService;
 import com.example.petmgmt.storage.PageHelper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -45,7 +47,7 @@ public class PetServiceImpl implements PetService {
     }
 
     @Override
-    public PageResult<Pet> getPets(int page, int size, String keyword, String species) {
+    public PageResult<PetVO> getPets(int page, int size, String keyword, String species) {
         User user = getCurrentUser();
         
         List<Pet> pets = petRepository.findAll(pet -> {
@@ -66,7 +68,20 @@ public class PetServiceImpl implements PetService {
                 .collect(Collectors.toList());
         
         PageHelper.PageData<Pet> pageData = PageHelper.paginate(pets, page, size);
-        return new PageResult<>(pageData.getRecords(), pageData.getTotal(), pageData.getCurrent(), pageData.getSize());
+        List<PetVO> voList = pageData.getRecords().stream()
+                .map(p -> toVO(p, user.getRole()))
+                .collect(Collectors.toList());
+        return new PageResult<>(voList, pageData.getTotal(), pageData.getCurrent(), pageData.getSize());
+    }
+
+    private PetVO toVO(Pet pet, Role role) {
+        PetVO vo = new PetVO();
+        BeanUtils.copyProperties(pet, vo);
+        if (role == Role.STAFF || role == Role.ADMIN) {
+            userRepository.findById(pet.getOwnerId())
+                    .ifPresent(owner -> vo.setOwnerName(owner.getUsername()));
+        }
+        return vo;
     }
 
     @Override

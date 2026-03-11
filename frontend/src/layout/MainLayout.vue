@@ -17,7 +17,7 @@
             <el-icon><CirclePlus /></el-icon>
             <span>新增宠物</span>
           </el-menu-item>
-          <el-menu-item index="" @click="goToAppointmentList">
+          <el-menu-item index="/owner/appointments" @click.prevent="goToAppointmentList">
             <el-icon><ShoppingCart /></el-icon>
             <span>预约寄养</span>
           </el-menu-item>
