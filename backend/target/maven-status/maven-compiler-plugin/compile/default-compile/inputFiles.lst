@@ -32,6 +32,7 @@ E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmg
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\controller\AdminStatsController.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\service\StatsService.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\domain\entity\Pet.java
+E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\domain\vo\PetVO.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\domain\entity\MedicalRecord.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\domain\dto\ChangePasswordRequest.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\domain\dto\LoginRequest.java
