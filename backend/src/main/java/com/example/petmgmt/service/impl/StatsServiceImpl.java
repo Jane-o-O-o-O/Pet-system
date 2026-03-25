@@ -1,7 +1,9 @@
 package com.example.petmgmt.service.impl;
 
 import com.example.petmgmt.domain.entity.BoardingOrder;
+import com.example.petmgmt.domain.entity.MedicalRecord;
 import com.example.petmgmt.domain.entity.Pet;
+import com.example.petmgmt.domain.entity.RegistrationAppointment;
 import com.example.petmgmt.domain.entity.User;
 import com.example.petmgmt.domain.entity.VaccineRecord;
 import com.example.petmgmt.domain.enums.OrderStatus;
@@ -9,6 +11,7 @@ import com.example.petmgmt.domain.vo.BoardingOrderVO;
 import com.example.petmgmt.repository.BoardingOrderRepository;
 import com.example.petmgmt.repository.MedicalRecordRepository;
 import com.example.petmgmt.repository.PetRepository;
+import com.example.petmgmt.repository.RegistrationAppointmentRepository;
 import com.example.petmgmt.repository.UserRepository;
 import com.example.petmgmt.repository.VaccineRecordRepository;
 import com.example.petmgmt.service.StatsService;
@@ -35,6 +38,7 @@ public class StatsServiceImpl implements StatsService {
     private final MedicalRecordRepository medicalRecordRepository;
     private final BoardingOrderRepository boardingOrderRepository;
     private final VaccineRecordRepository vaccineRecordRepository;
+    private final RegistrationAppointmentRepository registrationAppointmentRepository;
 
     @Override
     public Map<String, Object> getOverview() {
@@ -211,5 +215,153 @@ public class StatsServiceImpl implements StatsService {
         stats.put("statusDistribution", statusDistribution);
 
         return stats;
+    }
+
+    @Override
+    public String exportReport(LocalDate from, LocalDate to) {
+        StringBuilder csv = new StringBuilder();
+        csv.append('\uFEFF');
+
+        appendSection(csv, "概览统计", List.of(
+                List.of("指标", "数值"),
+                List.of("用户总数", stringify(userRepository.count(user -> true))),
+                List.of("宠物总数", stringify(petRepository.count(pet -> true))),
+                List.of("医疗记录总数", stringify(medicalRecordRepository.count(record -> true))),
+                List.of("寄养订单总数", stringify(boardingOrderRepository.count(order -> true))),
+                List.of("挂号预约总数", stringify(registrationAppointmentRepository.findAll().size())),
+                List.of("统计区间", from + " 至 " + to)
+        ));
+
+        List<BoardingOrder> orders = boardingOrderRepository.findAll(order ->
+                order.getStartDate() != null
+                        && !order.getStartDate().isBefore(from)
+                        && !order.getStartDate().isAfter(to));
+        appendSection(csv, "寄养订单明细", buildBoardingRows(orders));
+
+        List<VaccineRecord> vaccines = vaccineRecordRepository.findAll(record ->
+                record.getShotDate() != null
+                        && !record.getShotDate().isBefore(from)
+                        && !record.getShotDate().isAfter(to));
+        appendSection(csv, "疫苗记录明细", buildVaccineRows(vaccines));
+
+        List<MedicalRecord> medicalRecords = medicalRecordRepository.findAll(record ->
+                record.getVisitDate() != null
+                        && !record.getVisitDate().toLocalDate().isBefore(from)
+                        && !record.getVisitDate().toLocalDate().isAfter(to));
+        appendSection(csv, "医疗用药明细", buildMedicalRows(medicalRecords));
+
+        List<RegistrationAppointment> appointments = registrationAppointmentRepository.findAll(item ->
+                item.getAppointmentTime() != null
+                        && !item.getAppointmentTime().toLocalDate().isBefore(from)
+                        && !item.getAppointmentTime().toLocalDate().isAfter(to));
+        appendSection(csv, "挂号预约明细", buildAppointmentRows(appointments));
+        return csv.toString();
+    }
+
+    private List<List<String>> buildBoardingRows(List<BoardingOrder> orders) {
+        List<List<String>> rows = new java.util.ArrayList<>();
+        rows.add(List.of("订单号", "宠物", "主人", "开始日期", "结束日期", "房型", "总价", "状态", "备注"));
+        orders.stream()
+                .sorted(Comparator.comparing(BoardingOrder::getStartDate, Comparator.nullsLast(Comparator.naturalOrder())))
+                .forEach(order -> rows.add(List.of(
+                        stringify(order.getOrderNo()),
+                        petName(order.getPetId()),
+                        userName(order.getOwnerId()),
+                        stringify(order.getStartDate()),
+                        stringify(order.getEndDate()),
+                        stringify(order.getRoomType()),
+                        stringify(order.getPriceTotal()),
+                        stringify(order.getStatus()),
+                        stringify(order.getRemark())
+                )));
+        return rows;
+    }
+
+    private List<List<String>> buildVaccineRows(List<VaccineRecord> vaccines) {
+        List<List<String>> rows = new java.util.ArrayList<>();
+        rows.add(List.of("宠物", "主人", "疫苗名称", "接种日期", "下次接种日期", "提醒状态"));
+        vaccines.stream()
+                .sorted(Comparator.comparing(VaccineRecord::getShotDate, Comparator.nullsLast(Comparator.naturalOrder())))
+                .forEach(record -> {
+                    Long ownerId = petOwnerId(record.getPetId());
+                    rows.add(List.of(
+                            petName(record.getPetId()),
+                            userName(ownerId),
+                            stringify(record.getVaccineName()),
+                            stringify(record.getShotDate()),
+                            stringify(record.getNextDueDate()),
+                            stringify(record.getRemindStatus())
+                    ));
+                });
+        return rows;
+    }
+
+    private List<List<String>> buildMedicalRows(List<MedicalRecord> medicalRecords) {
+        List<List<String>> rows = new java.util.ArrayList<>();
+        rows.add(List.of("宠物", "主人", "就诊时间", "医生", "症状", "诊断", "治疗/用药"));
+        medicalRecords.stream()
+                .sorted(Comparator.comparing(MedicalRecord::getVisitDate, Comparator.nullsLast(Comparator.naturalOrder())))
+                .forEach(record -> {
+                    Long ownerId = petOwnerId(record.getPetId());
+                    rows.add(List.of(
+                            petName(record.getPetId()),
+                            userName(ownerId),
+                            stringify(record.getVisitDate()),
+                            stringify(record.getDoctorName()),
+                            stringify(record.getComplaint()),
+                            stringify(record.getDiagnosis()),
+                            stringify(record.getTreatment())
+                    ));
+                });
+        return rows;
+    }
+
+    private List<List<String>> buildAppointmentRows(List<RegistrationAppointment> appointments) {
+        List<List<String>> rows = new java.util.ArrayList<>();
+        rows.add(List.of("预约号", "宠物", "主人", "预约时间", "状态", "症状", "处理结果", "处理人", "备注"));
+        appointments.stream()
+                .sorted(Comparator.comparing(RegistrationAppointment::getAppointmentTime, Comparator.nullsLast(Comparator.naturalOrder())))
+                .forEach(item -> rows.add(List.of(
+                        stringify(item.getAppointmentNo()),
+                        petName(item.getPetId()),
+                        userName(item.getOwnerId()),
+                        stringify(item.getAppointmentTime()),
+                        stringify(item.getStatus()),
+                        stringify(item.getSymptom()),
+                        stringify(item.getResult()),
+                        userName(item.getStaffId()),
+                        stringify(item.getRemark())
+                )));
+        return rows;
+    }
+
+    private void appendSection(StringBuilder csv, String title, List<List<String>> rows) {
+        csv.append(escapeCsv(title)).append('\n');
+        rows.forEach(row -> csv.append(row.stream().map(this::escapeCsv).collect(Collectors.joining(","))).append('\n'));
+        csv.append('\n');
+    }
+
+    private String escapeCsv(String value) {
+        String text = value == null ? "" : value;
+        return "\"" + text.replace("\"", "\"\"") + "\"";
+    }
+
+    private String stringify(Object value) {
+        return value == null ? "" : String.valueOf(value);
+    }
+
+    private String petName(Long petId) {
+        return petRepository.findById(petId).map(Pet::getName).orElse("");
+    }
+
+    private Long petOwnerId(Long petId) {
+        return petRepository.findById(petId).map(Pet::getOwnerId).orElse(null);
+    }
+
+    private String userName(Long userId) {
+        if (userId == null) {
+            return "";
+        }
+        return userRepository.findById(userId).map(User::getUsername).orElse("");
     }
 }

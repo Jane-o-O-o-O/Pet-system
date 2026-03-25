@@ -1,77 +1,81 @@
 <template>
-  <div class="appointment-list">
-    <div class="header">
-      <el-button type="primary" @click="handleAdd">新增预约</el-button>
-    </div>
+  <div class="page-shell appointment-page">
+    <section class="page-head">
+      <div>
+        <span class="page-head__eyebrow">Registration Desk</span>
+        <h1 class="page-head__title">挂号预约</h1>
+        <p class="page-head__desc">在线提交到诊时间、宠物与症状信息，医护人员确认后可继续补充处理结果。</p>
+      </div>
+      <div class="page-head__actions">
+        <el-button type="primary" @click="handleAdd">新增预约</el-button>
+      </div>
+    </section>
 
-    <el-table :data="appointments" v-loading="loading" style="width: 100%">
-      <el-table-column prop="orderNo" label="预约号" width="230" />
-      <el-table-column prop="petName" label="宠物" width="120" />
-      <el-table-column prop="startDate" label="入住日期" width="120" />
-      <el-table-column prop="endDate" label="离店日期" width="120" />
-      <el-table-column prop="roomType" label="房型" width="100">
-        <template #default="scope">{{ roomTypeLabel(scope.row.roomType) }}</template>
-      </el-table-column>
-      <el-table-column label="预估价格" width="110">
-        <template #default="scope">¥{{ scope.row.priceTotal || 0 }}</template>
-      </el-table-column>
-      <el-table-column label="状态" width="110">
-        <template #default="scope">
-          <el-tag :type="getStatusType(scope.row.status)">{{ statusLabel(scope.row.status) }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="remark" label="备注" min-width="180" show-overflow-tooltip />
-      <el-table-column label="操作" width="120">
-        <template #default="scope">
-          <el-button
-            v-if="scope.row.status === 'CREATED' || scope.row.status === 'CONFIRMED'"
-            link
-            type="danger"
-            @click="handleCancel(scope.row.id)"
-          >取消预约</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <section class="page-panel">
+      <div class="panel-topline">
+        <span class="panel-topline__label">当前共 {{ total || appointments.length }} 条挂号预约</span>
+        <span class="panel-topline__label">支持主人取消待处理预约，医护和后台可跟进结果</span>
+      </div>
 
-    <el-pagination
-      v-if="total > 0"
-      style="margin-top: 16px; justify-content: flex-end;"
-      :current-page="page"
-      :page-size="pageSize"
-      :total="total"
-      layout="total, prev, pager, next"
-      @current-change="handlePageChange"
-    />
+      <el-table :data="appointments" v-loading="loading" style="width: 100%">
+        <el-table-column prop="appointmentNo" label="预约号" width="220" />
+        <el-table-column prop="petName" label="宠物" width="120" />
+        <el-table-column label="预约时间" width="170">
+          <template #default="scope">{{ formatDateTime(scope.row.appointmentTime) }}</template>
+        </el-table-column>
+        <el-table-column prop="symptom" label="症状描述" min-width="180" show-overflow-tooltip />
+        <el-table-column label="状态" width="120">
+          <template #default="scope">
+            <el-tag :type="statusType(scope.row.status)">{{ statusLabel(scope.row.status) }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="result" label="处理结果" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="remark" label="备注" min-width="160" show-overflow-tooltip />
+        <el-table-column label="操作" width="120">
+          <template #default="scope">
+            <el-button
+              v-if="scope.row.status === 'PENDING' || scope.row.status === 'CONFIRMED'"
+              link
+              type="danger"
+              @click="cancelAppointment(scope.row)"
+            >
+              取消预约
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
 
-    <el-dialog v-model="dialogVisible" title="新增预约" width="500px">
+      <el-pagination
+        v-if="total > 0"
+        :current-page="page"
+        :page-size="pageSize"
+        :total="total"
+        layout="total, prev, pager, next"
+        @current-change="handlePageChange"
+      />
+    </section>
+
+    <el-dialog v-model="dialogVisible" title="新增挂号预约" width="520px">
       <el-form ref="appointmentFormRef" :model="appointmentForm" :rules="appointmentRules" label-width="100px">
         <el-form-item label="选择宠物" prop="petId">
-          <el-select v-model="appointmentForm.petId" placeholder="请选择宠物">
+          <el-select v-model="appointmentForm.petId" placeholder="请选择宠物" style="width: 100%">
             <el-option v-for="pet in myPets" :key="pet.id" :label="pet.name" :value="pet.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="预约日期" prop="dateRange">
+        <el-form-item label="到诊时间" prop="appointmentTime">
           <el-date-picker
-            v-model="appointmentForm.dateRange"
-            type="daterange"
-            range-separator="至"
-            start-placeholder="入住日期"
-            end-placeholder="离店日期"
-            value-format="YYYY-MM-DD"
+            v-model="appointmentForm.appointmentTime"
+            type="datetime"
+            value-format="YYYY-MM-DDTHH:mm:ss"
+            placeholder="请选择到诊时间"
+            style="width: 100%"
           />
         </el-form-item>
-        <el-form-item label="房型" prop="roomType">
-          <el-select v-model="appointmentForm.roomType">
-            <el-option label="标准间 - ¥100/天" value="Standard" />
-            <el-option label="豪华间 - ¥200/天" value="Deluxe" />
-            <el-option label="套房 - ¥300/天" value="Suite" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="预估总价">
-          <span class="price-value">¥{{ estimatedPrice }}</span>
+        <el-form-item label="症状描述" prop="symptom">
+          <el-input v-model="appointmentForm.symptom" type="textarea" :rows="3" />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input v-model="appointmentForm.remark" type="textarea" />
+          <el-input v-model="appointmentForm.remark" type="textarea" :rows="2" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -83,10 +87,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive, watch } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import request from '../../utils/request'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+import request from '../../utils/request'
+import { formatDateTime } from '../../utils/date'
 
 const route = useRoute()
 
@@ -102,55 +107,45 @@ const appointmentFormRef = ref<FormInstance>()
 
 const appointmentForm = reactive({
   petId: null as number | null,
-  dateRange: [] as string[],
-  roomType: 'Standard',
+  appointmentTime: '',
+  symptom: '',
   remark: ''
 })
 
 const appointmentRules: FormRules = {
   petId: [{ required: true, message: '请选择宠物', trigger: 'change' }],
-  dateRange: [{ required: true, message: '请选择预约日期', trigger: 'change' }],
-  roomType: [{ required: true, message: '请选择房型', trigger: 'change' }]
+  appointmentTime: [{ required: true, message: '请选择到诊时间', trigger: 'change' }],
+  symptom: [{ required: true, message: '请填写症状描述', trigger: 'blur' }]
 }
 
-const roomPriceMap: Record<string, number> = { Standard: 100, Deluxe: 200, Suite: 300 }
-const roomTypeLabel = (type: string) => ({ Standard: '标准间', Deluxe: '豪华间', Suite: '套房' }[type] || type)
-const statusLabel = (status: string) => ({ CREATED: '待确认', CONFIRMED: '已预约', BOARDING: '已入住', COMPLETED: '已完成', CANCELLED: '已取消' }[status] || status)
-const getStatusType = (status: string) => ({ CREATED: 'info', CONFIRMED: 'success', BOARDING: 'warning', COMPLETED: '', CANCELLED: 'danger' }[status] || '')
+const statusLabel = (status: string) => ({
+  PENDING: '待确认',
+  CONFIRMED: '已确认',
+  COMPLETED: '已完成',
+  CANCELLED: '已取消'
+}[status] || status)
 
-const estimatedPrice = computed(() => {
-  if (appointmentForm.dateRange?.length === 2) {
-    const start = appointmentForm.dateRange[0]
-    const end = appointmentForm.dateRange[1]
-    if (typeof start !== 'string' || typeof end !== 'string') return 0
-    const startDate = new Date(start).getTime()
-    const endDate = new Date(end).getTime()
-    const days = Math.max(1, Math.ceil((endDate - startDate) / 86400000))
-    return days * (roomPriceMap[appointmentForm.roomType] || 100)
-  }
-  return 0
-})
+const statusType = (status: string) => ({
+  PENDING: 'warning',
+  CONFIRMED: 'primary',
+  COMPLETED: 'success',
+  CANCELLED: 'info'
+}[status] || '')
 
 const fetchAppointments = async () => {
   loading.value = true
   try {
-    const res: any = await request.get('/boarding-orders', { params: { page: page.value, size: pageSize.value } })
+    const res: any = await request.get('/registration-appointments', { params: { page: page.value, size: pageSize.value } })
     appointments.value = res.data?.list || []
     total.value = res.data?.total || 0
-  } catch (error) {
-    // handled by interceptor
   } finally {
     loading.value = false
   }
 }
 
 const fetchPets = async () => {
-  try {
-    const res: any = await request.get('/pets', { params: { size: 999 } })
-    myPets.value = res.data?.list || []
-  } catch (error) {
-    // handled by interceptor
-  }
+  const res: any = await request.get('/pets', { params: { size: 999 } })
+  myPets.value = res.data?.list || []
 }
 
 const handlePageChange = (currentPage: number) => {
@@ -159,8 +154,12 @@ const handlePageChange = (currentPage: number) => {
 }
 
 const handleAdd = () => {
-  fetchPets()
-  Object.assign(appointmentForm, { petId: null, dateRange: [], roomType: 'Standard', remark: '' })
+  Object.assign(appointmentForm, {
+    petId: null,
+    appointmentTime: '',
+    symptom: '',
+    remark: ''
+  })
   dialogVisible.value = true
 }
 
@@ -170,63 +169,36 @@ const saveAppointment = async () => {
 
   saving.value = true
   try {
-    await request.post('/boarding-orders', {
-      petId: appointmentForm.petId,
-      startDate: appointmentForm.dateRange[0],
-      endDate: appointmentForm.dateRange[1],
-      roomType: appointmentForm.roomType,
-      priceTotal: estimatedPrice.value,
-      remark: appointmentForm.remark
-    })
-    ElMessage.success('预约成功')
+    await request.post('/registration-appointments', appointmentForm)
+    ElMessage.success('预约提交成功')
     dialogVisible.value = false
     fetchAppointments()
-  } catch (error) {
-    // handled by interceptor
   } finally {
     saving.value = false
   }
 }
 
-const handleCancel = (id: number) => {
-  ElMessageBox.confirm('确定取消该预约吗？', '提示', { type: 'warning' }).then(async () => {
-    try {
-      await request.put(`/boarding-orders/${id}/status`, { status: 'CANCELLED' })
-      ElMessage.success('预约已取消')
-      fetchAppointments()
-    } catch (error) {
-      // handled by interceptor
-    }
+const cancelAppointment = (row: any) => {
+  ElMessageBox.confirm('确认取消这条预约吗？', '提示', { type: 'warning' }).then(async () => {
+    await request.put(`/registration-appointments/${row.id}`, {
+      status: 'CANCELLED',
+      remark: row.remark
+    })
+    ElMessage.success('预约已取消')
+    fetchAppointments()
   }).catch(() => {})
 }
 
-onMounted(() => {
-  fetchAppointments()
-  fetchPets()
+onMounted(async () => {
+  await Promise.all([fetchAppointments(), fetchPets()])
   if (route.query.action === 'add') {
     handleAdd()
-  } else {
-    dialogVisible.value = false
   }
 })
 
-watch(() => route.query.action, (action) => {
+watch(() => route.query.action, action => {
   if (action === 'add') {
     handleAdd()
-  } else {
-    dialogVisible.value = false
   }
 })
 </script>
-
-<style scoped>
-.header {
-  margin-bottom: 20px;
-}
-
-.price-value {
-  font-size: 18px;
-  color: #e6a23c;
-  font-weight: bold;
-}
-</style>

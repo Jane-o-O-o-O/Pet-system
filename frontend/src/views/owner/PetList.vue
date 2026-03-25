@@ -1,53 +1,61 @@
 <template>
-  <div class="pet-list">
-    <div class="header">
-      <el-button type="primary" @click="handleAdd">新增宠物</el-button>
-    </div>
+  <div class="page-shell pet-list-page">
+    <section class="page-head">
+      <div>
+        <span class="page-head__eyebrow">Pet Archive</span>
+        <h1 class="page-head__title">我的宠物档案</h1>
+        <p class="page-head__desc">维护宠物基础信息，并查看医疗记录和疫苗日期。</p>
+      </div>
+      <div class="page-head__actions">
+        <el-button type="primary" @click="handleAdd">新增宠物</el-button>
+      </div>
+    </section>
 
-    <el-table :data="pets" v-loading="loading" style="width: 100%">
-      <el-table-column prop="name" label="名字" />
-      <el-table-column prop="species" label="种类" />
-      <el-table-column prop="breed" label="品种" />
-      <el-table-column label="性别" width="80">
-        <template #default="scope">{{ genderLabel(scope.row.gender) }}</template>
-      </el-table-column>
-      <el-table-column prop="birthDate" label="生日" width="120" />
-      <el-table-column prop="weight" label="体重(kg)" width="100" />
-      <el-table-column label="是否绝育" width="100">
-        <template #default="scope">{{ scope.row.sterilized ? '是' : '否' }}</template>
-      </el-table-column>
-      <el-table-column prop="remark" label="备注" min-width="120" show-overflow-tooltip />
-      <el-table-column label="操作" width="250">
-        <template #default="scope">
-          <el-button link type="primary" @click="handleEdit(scope.row)">编辑</el-button>
-          <el-button link type="primary" @click="handleViewRecords(scope.row)">医疗/疫苗</el-button>
-          <el-button link type="danger" @click="handleDelete(scope.row.id)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <section class="page-panel">
+      <div class="panel-topline">
+        <span class="panel-topline__label">当前共 {{ total || pets.length }} 份宠物档案</span>
+        <span class="panel-topline__label">日期统一按本地时间展示</span>
+      </div>
 
-    <el-pagination
-      v-if="total > 0"
-      style="margin-top: 16px; justify-content: flex-end;"
-      :current-page="page"
-      :page-size="pageSize"
-      :total="total"
-      layout="total, prev, pager, next"
-      @current-change="handlePageChange"
-    />
+      <el-table :data="pets" v-loading="loading" style="width: 100%">
+        <el-table-column prop="name" label="名字" />
+        <el-table-column prop="species" label="种类" />
+        <el-table-column prop="breed" label="品种" />
+        <el-table-column label="性别" width="80">
+          <template #default="scope">{{ genderLabel(scope.row.gender) }}</template>
+        </el-table-column>
+        <el-table-column label="生日" width="120">
+          <template #default="scope">{{ formatDate(scope.row.birthDate) }}</template>
+        </el-table-column>
+        <el-table-column prop="weight" label="体重(kg)" width="100" />
+        <el-table-column label="是否绝育" width="100">
+          <template #default="scope">{{ scope.row.sterilized ? '是' : '否' }}</template>
+        </el-table-column>
+        <el-table-column prop="remark" label="备注" min-width="120" show-overflow-tooltip />
+        <el-table-column label="操作" width="250">
+          <template #default="scope">
+            <el-button link type="primary" @click="handleEdit(scope.row)">编辑</el-button>
+            <el-button link type="primary" @click="handleViewRecords(scope.row)">医疗/疫苗</el-button>
+            <el-button link type="danger" @click="handleDelete(scope.row.id)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
 
-    <!-- Pet Dialog -->
+      <el-pagination
+        v-if="total > 0"
+        :current-page="page"
+        :page-size="pageSize"
+        :total="total"
+        layout="total, prev, pager, next"
+        @current-change="handlePageChange"
+      />
+    </section>
+
     <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑宠物' : '新增宠物'" width="500px">
       <el-form ref="petFormRef" :model="petForm" :rules="petRules" label-width="80px">
-        <el-form-item label="名字" prop="name">
-          <el-input v-model="petForm.name" />
-        </el-form-item>
-        <el-form-item label="种类" prop="species">
-          <el-input v-model="petForm.species" />
-        </el-form-item>
-        <el-form-item label="品种">
-          <el-input v-model="petForm.breed" />
-        </el-form-item>
+        <el-form-item label="名字" prop="name"><el-input v-model="petForm.name" /></el-form-item>
+        <el-form-item label="种类" prop="species"><el-input v-model="petForm.species" /></el-form-item>
+        <el-form-item label="品种"><el-input v-model="petForm.breed" /></el-form-item>
         <el-form-item label="性别">
           <el-select v-model="petForm.gender">
             <el-option label="公" value="M" />
@@ -55,18 +63,10 @@
             <el-option label="未知" value="U" />
           </el-select>
         </el-form-item>
-        <el-form-item label="生日">
-          <el-date-picker v-model="petForm.birthDate" type="date" value-format="YYYY-MM-DD" />
-        </el-form-item>
-        <el-form-item label="体重(kg)">
-          <el-input-number v-model="petForm.weight" :precision="2" :step="0.1" :min="0" />
-        </el-form-item>
-        <el-form-item label="是否绝育">
-          <el-switch v-model="petForm.sterilized" :active-value="1" :inactive-value="0" />
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input v-model="petForm.remark" type="textarea" />
-        </el-form-item>
+        <el-form-item label="生日"><el-date-picker v-model="petForm.birthDate" type="date" value-format="YYYY-MM-DD" /></el-form-item>
+        <el-form-item label="体重(kg)"><el-input-number v-model="petForm.weight" :precision="2" :step="0.1" :min="0" /></el-form-item>
+        <el-form-item label="是否绝育"><el-switch v-model="petForm.sterilized" :active-value="1" :inactive-value="0" /></el-form-item>
+        <el-form-item label="备注"><el-input v-model="petForm.remark" type="textarea" /></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -74,23 +74,28 @@
       </template>
     </el-dialog>
 
-    <!-- Records Dialog -->
-    <el-dialog v-model="recordsVisible" :title="currentPet?.name + ' 的记录'" width="70%">
+    <el-dialog v-model="recordsVisible" :title="`${currentPet?.name || ''} 的记录`" width="70%">
       <el-tabs v-model="activeTab">
         <el-tab-pane label="医疗记录" name="medical">
           <el-table :data="medicalRecords" v-loading="recordsLoading">
-            <el-table-column prop="visitDate" label="就诊日期" width="180" />
+            <el-table-column label="就诊日期" width="180">
+              <template #default="scope">{{ formatDateTime(scope.row.visitDate) }}</template>
+            </el-table-column>
             <el-table-column prop="doctorName" label="医生" width="120" />
             <el-table-column prop="complaint" label="主诉" show-overflow-tooltip />
             <el-table-column prop="diagnosis" label="诊断" show-overflow-tooltip />
-            <el-table-column prop="treatment" label="治疗" show-overflow-tooltip />
+            <el-table-column prop="treatment" label="治疗/用药" show-overflow-tooltip />
           </el-table>
         </el-tab-pane>
         <el-tab-pane label="疫苗记录" name="vaccine">
           <el-table :data="vaccineRecords" v-loading="recordsLoading">
             <el-table-column prop="vaccineName" label="疫苗名称" />
-            <el-table-column prop="shotDate" label="接种日期" width="120" />
-            <el-table-column prop="nextDueDate" label="下次接种" width="120" />
+            <el-table-column label="接种日期" width="120">
+              <template #default="scope">{{ formatDate(scope.row.shotDate) }}</template>
+            </el-table-column>
+            <el-table-column label="下次接种" width="120">
+              <template #default="scope">{{ formatDate(scope.row.nextDueDate) }}</template>
+            </el-table-column>
             <el-table-column label="提醒状态" width="100">
               <template #default="scope">
                 <el-tag :type="remindStatusType(scope.row.remindStatus)">{{ remindStatusLabel(scope.row.remindStatus) }}</el-tag>
@@ -104,10 +109,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive, watch } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import request from '../../utils/request'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+import request from '../../utils/request'
+import { formatDate, formatDateTime } from '../../utils/date'
 
 const route = useRoute()
 
@@ -138,9 +144,9 @@ const petRules: FormRules = {
   species: [{ required: true, message: '请输入宠物种类', trigger: 'blur' }]
 }
 
-const genderLabel = (g: string) => ({ M: '公', F: '母', U: '未知' }[g] || g)
-const remindStatusLabel = (s: string) => ({ PENDING: '待提醒', SENT: '已提醒', DISABLED: '已禁用' }[s] || s)
-const remindStatusType = (s: string) => ({ PENDING: 'warning', SENT: 'success', DISABLED: 'info' }[s] || '')
+const genderLabel = (gender: string) => ({ M: '公', F: '母', U: '未知' }[gender] || gender)
+const remindStatusLabel = (status: string) => ({ PENDING: '待提醒', SENT: '已提醒', DISABLED: '已禁用' }[status] || status)
+const remindStatusType = (status: string) => ({ PENDING: 'warning', SENT: 'success', DISABLED: 'info' }[status] || '')
 
 const fetchPets = async () => {
   loading.value = true
@@ -148,15 +154,13 @@ const fetchPets = async () => {
     const res: any = await request.get('/pets', { params: { page: page.value, size: pageSize.value } })
     pets.value = res.data?.list || []
     total.value = res.data?.total || 0
-  } catch (error) {
-    // handled by interceptor
   } finally {
     loading.value = false
   }
 }
 
-const handlePageChange = (p: number) => {
-  page.value = p
+const handlePageChange = (currentPage: number) => {
+  page.value = currentPage
   fetchPets()
 }
 
@@ -185,22 +189,16 @@ const savePet = async () => {
     ElMessage.success('保存成功')
     dialogVisible.value = false
     fetchPets()
-  } catch (error) {
-    // handled by interceptor
   } finally {
     saving.value = false
   }
 }
 
 const handleDelete = (id: number) => {
-  ElMessageBox.confirm('确定删除该宠物吗？', '提示', { type: 'warning' }).then(async () => {
-    try {
-      await request.delete(`/pets/${id}`)
-      ElMessage.success('删除成功')
-      fetchPets()
-    } catch (error) {
-      // handled by interceptor
-    }
+  ElMessageBox.confirm('确认删除这只宠物吗？', '提示', { type: 'warning' }).then(async () => {
+    await request.delete(`/pets/${id}`)
+    ElMessage.success('删除成功')
+    fetchPets()
   }).catch(() => {})
 }
 
@@ -222,8 +220,6 @@ const handleViewRecords = async (pet: any) => {
     ])
     medicalRecords.value = mrRes.data?.list || []
     vaccineRecords.value = vrRes.data?.list || []
-  } catch (error) {
-    // handled by interceptor
   } finally {
     recordsLoading.value = false
   }
@@ -236,13 +232,9 @@ onMounted(() => {
   }
 })
 
-watch(() => route.query.action, (action) => {
+watch(() => route.query.action, action => {
   if (action === 'add') {
     handleAdd()
   }
 })
 </script>
-
-<style scoped>
-.header { margin-bottom: 20px; }
-</style>

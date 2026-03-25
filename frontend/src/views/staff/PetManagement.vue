@@ -1,52 +1,53 @@
 <template>
-  <div class="pet-management">
-    <div class="header">
-      <el-input v-model="keyword" placeholder="搜索宠物名" style="width: 200px; margin-right: 10px;" @keyup.enter="fetchPets" />
-      <el-button type="primary" @click="fetchPets">查询</el-button>
-    </div>
+  <div class="page-shell pet-management-page">
+    <section class="page-head">
+      <div>
+        <span class="page-head__eyebrow">Care Records</span>
+        <h1 class="page-head__title">门店宠物管理</h1>
+        <p class="page-head__desc">录入病历、疫苗和用药信息，所有日期统一按本地时间显示。</p>
+      </div>
+    </section>
 
-    <el-table :data="pets" v-loading="loading" style="width: 100%">
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="name" label="名字" />
-      <el-table-column prop="species" label="种类" />
-      <el-table-column prop="ownerName" label="主人" width="120" />
-      <el-table-column label="操作" width="350">
-        <template #default="scope">
-          <el-button link type="primary" @click="handleRecord(scope.row, 'medical')">录入医疗</el-button>
-          <el-button link type="primary" @click="handleRecord(scope.row, 'vaccine')">录入疫苗</el-button>
-          <el-button link type="primary" @click="handleViewRecords(scope.row)">查看记录</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <section class="page-panel">
+      <div class="page-toolbar">
+        <el-input v-model="keyword" placeholder="搜索宠物名" style="width: 220px" @keyup.enter="fetchPets" />
+        <el-button type="primary" @click="fetchPets">查询</el-button>
+        <span class="panel-topline__label">当前共 {{ total || pets.length }} 条宠物记录</span>
+      </div>
 
-    <el-pagination
-      v-if="total > 0"
-      style="margin-top: 16px; justify-content: flex-end;"
-      :current-page="page"
-      :page-size="pageSize"
-      :total="total"
-      layout="total, prev, pager, next"
-      @current-change="handlePageChange"
-    />
+      <el-table :data="pets" v-loading="loading" style="width: 100%">
+        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="name" label="名字" />
+        <el-table-column prop="species" label="种类" />
+        <el-table-column prop="ownerName" label="主人" width="120" />
+        <el-table-column label="操作" width="350">
+          <template #default="scope">
+            <el-button link type="primary" @click="handleRecord(scope.row, 'medical')">录入医疗</el-button>
+            <el-button link type="primary" @click="handleRecord(scope.row, 'vaccine')">录入疫苗</el-button>
+            <el-button link type="primary" @click="handleViewRecords(scope.row)">查看记录</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
 
-    <!-- Medical Record Dialog -->
+      <el-pagination
+        v-if="total > 0"
+        :current-page="page"
+        :page-size="pageSize"
+        :total="total"
+        layout="total, prev, pager, next"
+        @current-change="handlePageChange"
+      />
+    </section>
+
     <el-dialog v-model="medicalVisible" :title="editingMedical ? '编辑医疗记录' : '录入医疗记录'" width="550px">
       <el-form ref="medicalFormRef" :model="medicalForm" :rules="medicalRules" label-width="100px">
         <el-form-item label="就诊日期" prop="visitDate">
-          <el-date-picker v-model="medicalForm.visitDate" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" style="width: 100%;" />
+          <el-date-picker v-model="medicalForm.visitDate" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" style="width: 100%" />
         </el-form-item>
-        <el-form-item label="医生">
-          <el-input v-model="medicalForm.doctorName" />
-        </el-form-item>
-        <el-form-item label="主诉">
-          <el-input v-model="medicalForm.complaint" type="textarea" />
-        </el-form-item>
-        <el-form-item label="诊断">
-          <el-input v-model="medicalForm.diagnosis" type="textarea" />
-        </el-form-item>
-        <el-form-item label="治疗">
-          <el-input v-model="medicalForm.treatment" type="textarea" />
-        </el-form-item>
+        <el-form-item label="医生"><el-input v-model="medicalForm.doctorName" /></el-form-item>
+        <el-form-item label="主诉"><el-input v-model="medicalForm.complaint" type="textarea" /></el-form-item>
+        <el-form-item label="诊断"><el-input v-model="medicalForm.diagnosis" type="textarea" /></el-form-item>
+        <el-form-item label="治疗/用药"><el-input v-model="medicalForm.treatment" type="textarea" /></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="medicalVisible = false">取消</el-button>
@@ -54,21 +55,12 @@
       </template>
     </el-dialog>
 
-    <!-- Vaccine Record Dialog -->
     <el-dialog v-model="vaccineVisible" :title="editingVaccine ? '编辑疫苗记录' : '录入疫苗记录'" width="500px">
       <el-form ref="vaccineFormRef" :model="vaccineForm" :rules="vaccineRules" label-width="120px">
-        <el-form-item label="疫苗名称" prop="vaccineName">
-          <el-input v-model="vaccineForm.vaccineName" />
-        </el-form-item>
-        <el-form-item label="接种日期" prop="shotDate">
-          <el-date-picker v-model="vaccineForm.shotDate" type="date" value-format="YYYY-MM-DD" style="width: 100%;" />
-        </el-form-item>
-        <el-form-item label="下次接种日期" prop="nextDueDate">
-          <el-date-picker v-model="vaccineForm.nextDueDate" type="date" value-format="YYYY-MM-DD" style="width: 100%;" />
-        </el-form-item>
-        <el-form-item label="提前提醒天数">
-          <el-input-number v-model="vaccineForm.remindDaysBefore" :min="1" :max="30" />
-        </el-form-item>
+        <el-form-item label="疫苗名称" prop="vaccineName"><el-input v-model="vaccineForm.vaccineName" /></el-form-item>
+        <el-form-item label="接种日期" prop="shotDate"><el-date-picker v-model="vaccineForm.shotDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" /></el-form-item>
+        <el-form-item label="下次接种日期" prop="nextDueDate"><el-date-picker v-model="vaccineForm.nextDueDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" /></el-form-item>
+        <el-form-item label="提前提醒天数"><el-input-number v-model="vaccineForm.remindDaysBefore" :min="1" :max="30" /></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="vaccineVisible = false">取消</el-button>
@@ -76,16 +68,17 @@
       </template>
     </el-dialog>
 
-    <!-- View Records Dialog -->
-    <el-dialog v-model="recordsVisible" :title="currentPet?.name + ' 的记录'" width="80%">
+    <el-dialog v-model="recordsVisible" :title="`${currentPet?.name || ''} 的记录`" width="80%">
       <el-tabs v-model="activeTab">
         <el-tab-pane label="医疗记录" name="medical">
           <el-table :data="medicalRecords" v-loading="recordsLoading">
-            <el-table-column prop="visitDate" label="就诊日期" width="180" />
+            <el-table-column label="就诊日期" width="180">
+              <template #default="scope">{{ formatDateTime(scope.row.visitDate) }}</template>
+            </el-table-column>
             <el-table-column prop="doctorName" label="医生" width="120" />
             <el-table-column prop="complaint" label="主诉" show-overflow-tooltip />
             <el-table-column prop="diagnosis" label="诊断" show-overflow-tooltip />
-            <el-table-column prop="treatment" label="治疗" show-overflow-tooltip />
+            <el-table-column prop="treatment" label="治疗/用药" show-overflow-tooltip />
             <el-table-column label="操作" width="150">
               <template #default="scope">
                 <el-button link type="primary" @click="editMedical(scope.row)">编辑</el-button>
@@ -97,8 +90,12 @@
         <el-tab-pane label="疫苗记录" name="vaccine">
           <el-table :data="vaccineRecords" v-loading="recordsLoading">
             <el-table-column prop="vaccineName" label="疫苗名称" />
-            <el-table-column prop="shotDate" label="接种日期" width="120" />
-            <el-table-column prop="nextDueDate" label="下次接种" width="120" />
+            <el-table-column label="接种日期" width="120">
+              <template #default="scope">{{ formatDate(scope.row.shotDate) }}</template>
+            </el-table-column>
+            <el-table-column label="下次接种" width="120">
+              <template #default="scope">{{ formatDate(scope.row.nextDueDate) }}</template>
+            </el-table-column>
             <el-table-column label="提醒状态" width="100">
               <template #default="scope">
                 <el-tag :type="scope.row.remindStatus === 'SENT' ? 'success' : 'warning'">
@@ -120,9 +117,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue'
-import request from '../../utils/request'
+import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+import request from '../../utils/request'
+import { formatDate, formatDateTime } from '../../utils/date'
 
 const pets = ref<any[]>([])
 const keyword = ref('')
@@ -139,19 +137,16 @@ const fetchPets = async () => {
     const res: any = await request.get('/pets', { params: { page: page.value, size: pageSize.value, keyword: keyword.value } })
     pets.value = res.data?.list || []
     total.value = res.data?.total || 0
-  } catch (error) {
-    // handled by interceptor
   } finally {
     loading.value = false
   }
 }
 
-const handlePageChange = (p: number) => {
-  page.value = p
+const handlePageChange = (currentPage: number) => {
+  page.value = currentPage
   fetchPets()
 }
 
-// Medical
 const medicalVisible = ref(false)
 const editingMedical = ref(false)
 const medicalFormRef = ref<FormInstance>()
@@ -184,8 +179,6 @@ const saveMedical = async () => {
     ElMessage.success('保存成功')
     medicalVisible.value = false
     if (recordsVisible.value) refreshRecords()
-  } catch (error) {
-    // handled by interceptor
   } finally {
     saving.value = false
   }
@@ -198,18 +191,13 @@ const editMedical = (row: any) => {
 }
 
 const deleteMedical = (id: number) => {
-  ElMessageBox.confirm('确定删除该医疗记录吗？', '提示', { type: 'warning' }).then(async () => {
-    try {
-      await request.delete(`/medical-records/${id}`)
-      ElMessage.success('删除成功')
-      refreshRecords()
-    } catch (error) {
-      // handled by interceptor
-    }
+  ElMessageBox.confirm('确认删除这条医疗记录吗？', '提示', { type: 'warning' }).then(async () => {
+    await request.delete(`/medical-records/${id}`)
+    ElMessage.success('删除成功')
+    refreshRecords()
   }).catch(() => {})
 }
 
-// Vaccine
 const vaccineVisible = ref(false)
 const editingVaccine = ref(false)
 const vaccineFormRef = ref<FormInstance>()
@@ -237,8 +225,6 @@ const saveVaccine = async () => {
     ElMessage.success('保存成功')
     vaccineVisible.value = false
     if (recordsVisible.value) refreshRecords()
-  } catch (error) {
-    // handled by interceptor
   } finally {
     saving.value = false
   }
@@ -251,18 +237,13 @@ const editVaccine = (row: any) => {
 }
 
 const deleteVaccine = (id: number) => {
-  ElMessageBox.confirm('确定删除该疫苗记录吗？', '提示', { type: 'warning' }).then(async () => {
-    try {
-      await request.delete(`/vaccines/${id}`)
-      ElMessage.success('删除成功')
-      refreshRecords()
-    } catch (error) {
-      // handled by interceptor
-    }
+  ElMessageBox.confirm('确认删除这条疫苗记录吗？', '提示', { type: 'warning' }).then(async () => {
+    await request.delete(`/vaccines/${id}`)
+    ElMessage.success('删除成功')
+    refreshRecords()
   }).catch(() => {})
 }
 
-// View Records
 const recordsVisible = ref(false)
 const activeTab = ref('medical')
 const medicalRecords = ref<any[]>([])
@@ -285,8 +266,6 @@ const refreshRecords = async () => {
     ])
     medicalRecords.value = mrRes.data?.list || []
     vaccineRecords.value = vrRes.data?.list || []
-  } catch (error) {
-    // handled by interceptor
   } finally {
     recordsLoading.value = false
   }
@@ -294,7 +273,3 @@ const refreshRecords = async () => {
 
 onMounted(fetchPets)
 </script>
-
-<style scoped>
-.header { margin-bottom: 20px; display: flex; align-items: center; }
-</style>

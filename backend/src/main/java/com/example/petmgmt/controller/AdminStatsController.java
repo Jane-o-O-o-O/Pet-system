@@ -4,6 +4,9 @@ import com.example.petmgmt.common.ApiResponse;
 import com.example.petmgmt.service.StatsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -42,5 +45,17 @@ public class AdminStatsController {
     @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
     public ApiResponse<Map<String, Object>> getOperationalStats() {
         return ApiResponse.success(statsService.getOperationalStats());
+    }
+
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> exportReport(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        String csv = statsService.exportReport(from, to);
+        String fileName = "pet-report-" + from + "-to-" + to + ".csv";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                .contentType(new MediaType("text", "csv"))
+                .body(csv.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 }
