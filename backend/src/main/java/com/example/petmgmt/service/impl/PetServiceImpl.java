@@ -78,10 +78,19 @@ public class PetServiceImpl implements PetService {
         PetVO vo = new PetVO();
         BeanUtils.copyProperties(pet, vo);
         if (role == Role.STAFF || role == Role.ADMIN) {
-            userRepository.findById(pet.getOwnerId())
-                    .ifPresent(owner -> vo.setOwnerName(owner.getUsername()));
+            vo.setOwnerName(resolveOwnerName(pet.getOwnerId()));
         }
         return vo;
+    }
+
+    private String resolveOwnerName(Long ownerId) {
+        if (ownerId == null) {
+            return "未绑定主人";
+        }
+        return userRepository.findById(ownerId)
+                .map(User::getUsername)
+                .filter(StringUtils::hasText)
+                .orElse("用户#" + ownerId);
     }
 
     @Override

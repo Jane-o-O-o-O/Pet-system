@@ -1,6 +1,7 @@
 com\example\petmgmt\service\impl\VaccineServiceImpl.class
 com\example\petmgmt\domain\entity\Pet.class
 com\example\petmgmt\config\SecurityConfig.class
+com\example\petmgmt\domain\vo\RegistrationAppointmentVO.class
 com\example\petmgmt\config\JwtAuthFilter.class
 com\example\petmgmt\controller\UserController.class
 com\example\petmgmt\common\ErrorCode.class
@@ -32,6 +33,7 @@ com\example\petmgmt\service\PetService.class
 com\example\petmgmt\domain\enums\OrderStatus.class
 com\example\petmgmt\service\impl\StatsServiceImpl.class
 com\example\petmgmt\domain\enums\RemindStatus.class
+com\example\petmgmt\repository\RegistrationAppointmentRepository$1.class
 com\example\petmgmt\domain\dto\LoginRequest.class
 com\example\petmgmt\common\PageResult.class
 com\example\petmgmt\domain\dto\ChangePasswordRequest.class
@@ -41,6 +43,7 @@ com\example\petmgmt\service\impl\MedicalRecordServiceImpl.class
 com\example\petmgmt\storage\PageHelper.class
 com\example\petmgmt\controller\AuthController.class
 com\example\petmgmt\service\NotifyService.class
+com\example\petmgmt\domain\enums\AppointmentStatus.class
 com\example\petmgmt\service\impl\PetServiceImpl.class
 com\example\petmgmt\repository\NotificationRepository.class
 com\example\petmgmt\domain\entity\SysConfig.class
@@ -52,9 +55,11 @@ com\example\petmgmt\controller\NotifyController.class
 com\example\petmgmt\service\DashboardService.class
 com\example\petmgmt\service\MedicalRecordService.class
 com\example\petmgmt\repository\NotificationRepository$1.class
+com\example\petmgmt\controller\RegistrationAppointmentController.class
 com\example\petmgmt\repository\VaccineRecordRepository$1.class
 com\example\petmgmt\service\impl\AuthServiceImpl.class
 com\example\petmgmt\service\impl\DashboardServiceImpl.class
+com\example\petmgmt\domain\entity\RegistrationAppointment.class
 com\example\petmgmt\PetMgmtApplication.class
 com\example\petmgmt\domain\dto\RegisterRequest.class
 com\example\petmgmt\repository\BoardingOrderRepository.class
@@ -62,12 +67,16 @@ com\example\petmgmt\controller\DashboardController.class
 com\example\petmgmt\controller\PetController.class
 com\example\petmgmt\domain\entity\BoardingOrder.class
 com\example\petmgmt\repository\SysConfigRepository.class
+com\example\petmgmt\repository\RegistrationAppointmentRepository.class
 com\example\petmgmt\common\GlobalExceptionHandler.class
 com\example\petmgmt\controller\AdminStatsController.class
 com\example\petmgmt\common\BizException.class
 com\example\petmgmt\repository\PetRepository.class
+com\example\petmgmt\service\impl\RegistrationAppointmentServiceImpl.class
 com\example\petmgmt\service\impl\UserServiceImpl.class
+com\example\petmgmt\service\RegistrationAppointmentService.class
 com\example\petmgmt\service\AuthService.class
+com\example\petmgmt\domain\vo\PetVO.class
 com\example\petmgmt\service\StatsService.class
 com\example\petmgmt\config\AdminInitializer.class
 com\example\petmgmt\config\JacksonConfig$UserMixIn.class

@@ -1,0 +1,13 @@
+[ {
+  "id" : 1,
+  "petId" : 1,
+  "doctorName" : "帅哥",
+  "visitDate" : [ 2026, 3, 24, 0, 0 ],
+  "complaint" : "无",
+  "diagnosis" : "感冒",
+  "treatment" : "打针",
+  "attachments" : null,
+  "createdBy" : 1,
+  "createdAt" : [ 2026, 3, 24, 22, 12, 31, 489967400 ],
+  "updatedAt" : [ 2026, 3, 24, 22, 12, 31, 489967400 ]
+} ]

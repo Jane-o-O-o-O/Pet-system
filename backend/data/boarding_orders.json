@@ -1,0 +1,15 @@
+[ {
+  "id" : 1,
+  "orderNo" : "BO1774361270787BC0D6DF2",
+  "petId" : 1,
+  "ownerId" : 3,
+  "staffId" : null,
+  "startDate" : [ 2026, 4, 25 ],
+  "endDate" : [ 2026, 5, 25 ],
+  "roomType" : "Standard",
+  "priceTotal" : 3000,
+  "status" : "CREATED",
+  "remark" : "",
+  "createdAt" : [ 2026, 3, 24, 22, 7, 50, 814398600 ],
+  "updatedAt" : [ 2026, 3, 24, 22, 7, 50, 814398600 ]
+} ]

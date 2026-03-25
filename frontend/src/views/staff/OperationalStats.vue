@@ -1,5 +1,13 @@
 <template>
-  <div class="operational-stats">
+  <div class="page-shell operational-stats-page">
+    <section class="page-head">
+      <div>
+        <span class="page-head__eyebrow">Operations Overview</span>
+        <h1 class="page-head__title">门店运营概览</h1>
+        <p class="page-head__desc">用更直观的方式查看疫苗记录、房态和订单状态，让日常运营压力一眼可见。</p>
+      </div>
+    </section>
+
     <el-row :gutter="20">
       <el-col :span="6">
         <el-card shadow="hover">
@@ -45,7 +53,7 @@
       <el-col :span="12">
         <el-card>
           <template #header>房间使用情况</template>
-          <el-table :data="roomList" style="width: 100%">
+          <el-table :data="roomList" class="room-table" style="width: 100%">
             <el-table-column label="房型" width="120">
               <template #default="scope">{{ roomTypeLabel(scope.row.type) }}</template>
             </el-table-column>
@@ -154,18 +162,34 @@ onMounted(fetchStats)
 .status-item {
   text-align: center;
   padding: 20px;
-  background-color: #f5f7fa;
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.58);
+  border-radius: 20px;
+  box-shadow: inset 0 0 0 1px rgba(40, 71, 54, 0.08);
   min-width: 120px;
 }
 .status-label {
   font-size: 14px;
-  color: #606266;
+  color: var(--pet-muted);
   margin-bottom: 8px;
 }
 .status-count {
   font-size: 32px;
   font-weight: bold;
-  color: #409eff;
+  color: var(--pet-forest);
+}
+
+.room-table {
+  width: 100%;
+}
+
+.room-table:deep(.el-table__header),
+.room-table:deep(.el-table__body),
+.room-table:deep(.el-table__footer) {
+  width: 100% !important;
+}
+
+.room-table:deep(.el-table__header-wrapper table),
+.room-table:deep(.el-table__body-wrapper table) {
+  width: 100% !important;
 }
 </style>

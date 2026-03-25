@@ -1,42 +1,52 @@
 <template>
-  <div class="user-management">
-    <div class="header">
-      <el-input v-model="keyword" placeholder="搜索用户名/手机号" style="width: 200px; margin-right: 10px;" @keyup.enter="fetchUsers" />
-      <el-button type="primary" @click="fetchUsers">查询</el-button>
-      <el-button type="success" @click="handleAddUser">创建用户</el-button>
-    </div>
+  <div class="page-shell user-management-page">
+    <section class="page-head">
+      <div>
+        <span class="page-head__eyebrow">Accounts / Admin</span>
+        <h1 class="page-head__title">用户与角色面板</h1>
+        <p class="page-head__desc">维护系统账号、角色和启用状态，让主人、医护人员与管理员拥有清晰的权限边界。</p>
+      </div>
+    </section>
 
-    <el-table :data="users" v-loading="loading" style="width: 100%">
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="username" label="用户名" />
-      <el-table-column prop="phone" label="手机号" />
-      <el-table-column prop="email" label="邮箱" />
-      <el-table-column label="角色" width="120">
-        <template #default="scope">
-          <el-tag :type="roleTagType(scope.row.role)">{{ roleLabel(scope.row.role) }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="状态" width="100">
-        <template #default="scope">
-          <el-switch v-model="scope.row.status" :active-value="1" :inactive-value="0" @change="handleStatusChange(scope.row)" />
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="150">
-        <template #default="scope">
-          <el-button link type="primary" @click="handleRoleChange(scope.row)">修改角色</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <section class="page-panel">
+      <div class="page-toolbar">
+        <el-input v-model="keyword" placeholder="搜索用户名/手机号" style="width: 220px;" @keyup.enter="fetchUsers" />
+        <el-button type="primary" @click="fetchUsers">查询</el-button>
+        <el-button type="success" @click="handleAddUser">创建用户</el-button>
+        <span class="panel-topline__label">当前共 {{ total || users.length }} 个系统账号</span>
+      </div>
 
-    <el-pagination
-      v-if="total > 0"
-      style="margin-top: 16px; justify-content: flex-end;"
-      :current-page="page"
-      :page-size="pageSize"
-      :total="total"
-      layout="total, prev, pager, next"
-      @current-change="handlePageChange"
-    />
+      <el-table :data="users" v-loading="loading" style="width: 100%">
+        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="username" label="用户名" />
+        <el-table-column prop="phone" label="手机号" />
+        <el-table-column prop="email" label="邮箱" />
+        <el-table-column label="角色" width="120">
+          <template #default="scope">
+            <el-tag :type="roleTagType(scope.row.role)">{{ roleLabel(scope.row.role) }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="100">
+          <template #default="scope">
+            <el-switch v-model="scope.row.status" :active-value="1" :inactive-value="0" @change="handleStatusChange(scope.row)" />
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="150">
+          <template #default="scope">
+            <el-button link type="primary" @click="handleRoleChange(scope.row)">修改角色</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <el-pagination
+        v-if="total > 0"
+        :current-page="page"
+        :page-size="pageSize"
+        :total="total"
+        layout="total, prev, pager, next"
+        @current-change="handlePageChange"
+      />
+    </section>
 
     <!-- Create User Dialog -->
     <el-dialog v-model="createVisible" title="创建用户" width="450px">
@@ -46,7 +56,7 @@
         </el-form-item>
         <el-form-item label="角色" prop="role">
           <el-select v-model="createForm.role">
-            <el-option label="服务人员" value="STAFF" />
+            <el-option label="医护人员" value="STAFF" />
             <el-option label="宠物主人" value="OWNER" />
           </el-select>
         </el-form-item>
@@ -68,7 +78,7 @@
     <el-dialog v-model="roleVisible" title="修改角色" width="400px">
       <el-select v-model="currentRole" style="width: 100%;">
         <el-option label="管理员" value="ADMIN" />
-        <el-option label="服务人员" value="STAFF" />
+        <el-option label="医护人员" value="STAFF" />
         <el-option label="宠物主人" value="OWNER" />
       </el-select>
       <template #footer>
@@ -92,7 +102,7 @@ const page = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 
-const roleLabel = (r: string) => ({ ADMIN: '管理员', STAFF: '服务人员', OWNER: '宠物主人' }[r] || r)
+const roleLabel = (r: string) => ({ ADMIN: '管理员', STAFF: '医护人员', OWNER: '宠物主人' }[r] || r)
 const roleTagType = (r: string) => ({ ADMIN: 'danger', STAFF: 'warning', OWNER: '' }[r] || '')
 
 const fetchUsers = async () => {
@@ -181,5 +191,4 @@ onMounted(fetchUsers)
 </script>
 
 <style scoped>
-.header { margin-bottom: 20px; display: flex; align-items: center; }
 </style>

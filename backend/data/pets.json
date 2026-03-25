@@ -1,0 +1,15 @@
+[ {
+  "id" : 1,
+  "ownerId" : 3,
+  "name" : "旺财",
+  "species" : "狗",
+  "breed" : "拉布拉多",
+  "gender" : "M",
+  "birthDate" : [ 2026, 3, 25 ],
+  "weight" : 15,
+  "sterilized" : 0,
+  "photoUrl" : null,
+  "remark" : "温顺",
+  "createdAt" : [ 2026, 3, 24, 22, 3, 43, 670008300 ],
+  "updatedAt" : [ 2026, 3, 24, 22, 3, 43, 670008300 ]
+} ]

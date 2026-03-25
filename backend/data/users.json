@@ -8,4 +8,24 @@
   "status" : 1,
   "createdAt" : [ 2026, 3, 5, 22, 44, 25, 727150500 ],
   "updatedAt" : [ 2026, 3, 5, 22, 44, 25, 727150500 ]
+}, {
+  "id" : 2,
+  "username" : "111",
+  "passwordHash" : "$2a$10$VDKliWw1t80mogDuAMu/k.oTpkwqqcws1Y50We4wPh5eOCfajsafi",
+  "phone" : "",
+  "email" : "",
+  "role" : "STAFF",
+  "status" : 1,
+  "createdAt" : [ 2026, 3, 18, 23, 51, 37, 699566200 ],
+  "updatedAt" : [ 2026, 3, 18, 23, 51, 37, 699566200 ]
+}, {
+  "id" : 3,
+  "username" : "222",
+  "passwordHash" : "$2a$10$q2KrAakb.T0K1za1HNikXOAVUzr6cJwM6BCrYj5I3pC35pcLIJQ1S",
+  "phone" : "",
+  "email" : "",
+  "role" : "OWNER",
+  "status" : 1,
+  "createdAt" : [ 2026, 3, 18, 23, 51, 44, 37463800 ],
+  "updatedAt" : [ 2026, 3, 18, 23, 51, 44, 37463800 ]
 } ]

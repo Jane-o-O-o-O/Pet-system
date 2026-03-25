@@ -8,6 +8,7 @@ E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmg
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\service\impl\UserDetailsServiceImpl.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\domain\entity\Notification.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\domain\entity\User.java
+E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\controller\RegistrationAppointmentController.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\service\impl\UserServiceImpl.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\repository\SysConfigRepository.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\service\impl\VaccineServiceImpl.java
@@ -18,8 +19,10 @@ E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmg
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\controller\VaccineController.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\service\impl\BoardingOrderServiceImpl.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\service\PetService.java
+E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\domain\vo\RegistrationAppointmentVO.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\controller\BoardingOrderController.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\repository\VaccineRecordRepository.java
+E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\service\RegistrationAppointmentService.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\common\ApiResponse.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\config\JwtAuthFilter.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\common\PageResult.java
@@ -27,6 +30,7 @@ E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmg
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\common\GlobalExceptionHandler.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\domain\entity\SysConfig.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\domain\dto\RegisterRequest.java
+E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\domain\enums\AppointmentStatus.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\repository\PetRepository.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\controller\AuthController.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\controller\AdminStatsController.java
@@ -41,12 +45,15 @@ E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmg
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\domain\vo\BoardingOrderVO.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\service\impl\NotifyServiceImpl.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\common\BizException.java
+E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\domain\entity\RegistrationAppointment.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\storage\PageHelper.java
+E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\repository\RegistrationAppointmentRepository.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\service\MedicalRecordService.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\repository\UserRepository.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\common\SecurityUtils.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\controller\UserController.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\service\impl\AuthServiceImpl.java
+E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\service\impl\RegistrationAppointmentServiceImpl.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\service\DashboardService.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\service\AuthService.java
 E:\接单项目\宠物信息管理系统\backend\src\main\java\com\example\petmgmt\domain\enums\OrderStatus.java
