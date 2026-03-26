@@ -320,6 +320,7 @@ const submitChangePassword = async () => {
 .shell-nav {
   position: sticky;
   top: 0;
+  z-index: 4;
   height: 100vh;
   padding: 28px 22px;
   background:
@@ -486,6 +487,8 @@ const submitChangePassword = async () => {
   justify-content: space-between;
   align-items: flex-start;
   gap: 18px;
+  position: relative;
+  z-index: 3;
   padding: 18px 26px;
   margin-bottom: 18px;
   border-radius: 32px;

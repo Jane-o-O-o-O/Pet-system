@@ -152,6 +152,7 @@ a {
     radial-gradient(circle, rgba(40, 71, 54, 0.12) 0 16%, transparent 17%) 10px 0 / 44px 44px,
     radial-gradient(circle, rgba(40, 71, 54, 0.12) 0 8%, transparent 9%) 0 24px / 44px 44px;
   opacity: 0.7;
+  pointer-events: none;
 }
 
 .page-head__eyebrow {
@@ -300,6 +301,65 @@ a {
 .el-button--primary.is-text,
 .el-button--primary.is-link {
   box-shadow: none;
+}
+
+.el-button--primary.is-plain,
+.el-button--primary.is-plain:hover,
+.el-button--primary.is-plain:focus,
+.el-button--primary.is-plain:active {
+  color: #fff !important;
+  background: linear-gradient(135deg, var(--pet-forest), var(--pet-forest-deep)) !important;
+  border-color: transparent !important;
+  box-shadow: 0 12px 24px rgba(40, 71, 54, 0.22) !important;
+}
+
+.el-button.is-link {
+  padding-inline: 14px !important;
+}
+
+.el-button--primary.is-link,
+.el-button--primary.is-link:hover,
+.el-button--primary.is-link:focus,
+.el-button--primary.is-link:active {
+  color: var(--pet-forest) !important;
+  background: rgba(40, 71, 54, 0.1) !important;
+  border-color: transparent !important;
+}
+
+.el-button--success.is-link,
+.el-button--success.is-link:hover,
+.el-button--success.is-link:focus,
+.el-button--success.is-link:active {
+  color: var(--el-color-success) !important;
+  background: rgba(82, 124, 89, 0.12) !important;
+  border-color: transparent !important;
+}
+
+.el-button--warning.is-link,
+.el-button--warning.is-link:hover,
+.el-button--warning.is-link:focus,
+.el-button--warning.is-link:active {
+  color: var(--el-color-warning) !important;
+  background: rgba(209, 142, 67, 0.12) !important;
+  border-color: transparent !important;
+}
+
+.el-button--danger.is-link,
+.el-button--danger.is-link:hover,
+.el-button--danger.is-link:focus,
+.el-button--danger.is-link:active {
+  color: var(--el-color-danger) !important;
+  background: rgba(184, 95, 82, 0.12) !important;
+  border-color: transparent !important;
+}
+
+.el-button--info.is-link,
+.el-button--info.is-link:hover,
+.el-button--info.is-link:focus,
+.el-button--info.is-link:active {
+  color: var(--el-color-info) !important;
+  background: rgba(107, 123, 114, 0.12) !important;
+  border-color: transparent !important;
 }
 
 .el-button + .el-button {
