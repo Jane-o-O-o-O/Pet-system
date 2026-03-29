@@ -39,7 +39,14 @@
       />
     </section>
 
-    <el-dialog v-model="medicalVisible" :title="editingMedical ? '编辑医疗记录' : '录入医疗记录'" width="550px">
+    <el-dialog
+      v-model="medicalVisible"
+      :title="editingMedical ? '编辑医疗记录' : '录入医疗记录'"
+      width="550px"
+      align-center
+      append-to-body
+      destroy-on-close
+    >
       <el-form ref="medicalFormRef" :model="medicalForm" :rules="medicalRules" label-width="100px">
         <el-form-item label="就诊日期" prop="visitDate">
           <el-date-picker v-model="medicalForm.visitDate" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" style="width: 100%" />
@@ -55,7 +62,14 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="vaccineVisible" :title="editingVaccine ? '编辑疫苗记录' : '录入疫苗记录'" width="500px">
+    <el-dialog
+      v-model="vaccineVisible"
+      :title="editingVaccine ? '编辑疫苗记录' : '录入疫苗记录'"
+      width="500px"
+      align-center
+      append-to-body
+      destroy-on-close
+    >
       <el-form ref="vaccineFormRef" :model="vaccineForm" :rules="vaccineRules" label-width="120px">
         <el-form-item label="疫苗名称" prop="vaccineName"><el-input v-model="vaccineForm.vaccineName" /></el-form-item>
         <el-form-item label="接种日期" prop="shotDate"><el-date-picker v-model="vaccineForm.shotDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" /></el-form-item>
@@ -68,7 +82,14 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="recordsVisible" :title="`${currentPet?.name || ''} 的记录`" width="80%">
+    <el-dialog
+      v-model="recordsVisible"
+      :title="`${currentPet?.name || ''} 的记录`"
+      width="80%"
+      align-center
+      append-to-body
+      destroy-on-close
+    >
       <el-tabs v-model="activeTab">
         <el-tab-pane label="医疗记录" name="medical">
           <el-table :data="medicalRecords" v-loading="recordsLoading">

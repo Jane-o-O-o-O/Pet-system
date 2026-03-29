@@ -51,7 +51,14 @@
       />
     </section>
 
-    <el-dialog v-model="dialogVisible" title="处理挂号预约" width="560px">
+    <el-dialog
+      v-model="dialogVisible"
+      title="处理挂号预约"
+      width="560px"
+      align-center
+      append-to-body
+      destroy-on-close
+    >
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="预约时间">
           <el-date-picker

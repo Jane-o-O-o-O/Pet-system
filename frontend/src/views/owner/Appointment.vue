@@ -55,7 +55,14 @@
       />
     </section>
 
-    <el-dialog v-model="dialogVisible" title="新增挂号预约" width="520px">
+    <el-dialog
+      v-model="dialogVisible"
+      title="新增挂号预约"
+      width="520px"
+      align-center
+      append-to-body
+      destroy-on-close
+    >
       <el-form ref="appointmentFormRef" :model="appointmentForm" :rules="appointmentRules" label-width="100px">
         <el-form-item label="选择宠物" prop="petId">
           <el-select v-model="appointmentForm.petId" placeholder="请选择宠物" style="width: 100%">
